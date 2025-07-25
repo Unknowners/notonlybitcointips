@@ -1,0 +1,13 @@
+// Version: 1.0.0
+type Time__68025968 = Int;
+type UserId__237656146 = Principal;
+type User__37574276 =
+  {
+    createdAt : Time__68025968;
+    id : UserId__237656146;
+    username : Text;
+    wallet : Text
+  };
+actor {
+  stable var users : [User__37574276]
+};

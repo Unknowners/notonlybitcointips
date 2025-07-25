@@ -1,0 +1,14 @@
+{
+  "canisters": {
+    "user_canister": {
+      "main": "user_canister.mo",
+      "type": "motoko"
+    }
+  },
+  "defaults": {
+    "build": {
+      "packtool": ""
+    }
+  },
+  "version": 1
+} 
