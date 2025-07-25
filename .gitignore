@@ -1,0 +1,17 @@
+# DFINITY local build artifacts
+.dfx/
+
+# Node dependencies
+node_modules/
+
+# Build outputs
+/dist/
+/dist-ssr/
+/build/
+
+# Miscellaneous files
+*.log
+logs/
+.DS_Store
+.env
+.idea/
