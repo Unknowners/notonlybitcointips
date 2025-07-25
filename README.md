@@ -5,7 +5,7 @@ Donation Hub is a simple example dApp built for the ICP hackathon. It demonstrat
 ## Repository structure
 
 - `frontend/` – React application built with Vite and Tailwind CSS
-- `hackaton/` – Motoko canister source (`user_canister.mo`)
+- `backend/` – Motoko canister source (`user_canister.mo`)
 - `dfx.json` – project configuration for the DFINITY SDK (`dfx`)
 
 ## Requirements

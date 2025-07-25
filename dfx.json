@@ -1,7 +1,7 @@
 {
   "canisters": {
     "user_canister": {
-      "main": "hackaton/user_canister.mo",
+      "main": "backend/user_canister.mo",
       "type": "motoko"
     }
   },
