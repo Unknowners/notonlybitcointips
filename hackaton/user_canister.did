@@ -22,9 +22,4 @@ service : {
   createCampaign: (name: text, description: text, acceptedTokens: vec text) -> (text);
   getCampaign: (id: text) -> (opt Campaign) query;
   getUserCampaigns: (userId: UserId) -> (vec Campaign) query;
-  getAllCampaigns: () -> (vec Campaign) query;
-  getAllUsers: () -> (vec User) query;
-  clearUsers: () -> ();
-  debugCompare: (userId: principal) -> (vec record { text; principal; bool }) query;
-  debugPrincipal: (userId: principal) -> (text) query;
-}
+} 

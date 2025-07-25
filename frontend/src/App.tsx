@@ -1,21 +1,15 @@
-import React, { useEffect, useState } from "react";
-import { user_canister } from "./canisters";
+import React from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import MainApp from "./MainApp";
+import CampaignPage from "./CampaignPage";
 
 export default function App() {
-  const [users, setUsers] = useState([]);
-
-  useEffect(() => {
-    user_canister.getAllUsers().then(setUsers);
-  }, []);
-
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Користувачі</h1>
-      <ul>
-        {users.map((u, i) => (
-          <li key={i}>{u.username} ({u.wallet})</li>
-        ))}
-      </ul>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<MainApp />} />
+        <Route path="/donate/:id" element={<CampaignPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
