@@ -110,28 +110,19 @@ export default function MainApp() {
                     console.log('✅ User is authenticated, checking if user exists...');
                     
                     // Функція для перевірки існування користувача з повторними спробами
-                    const checkUserExistsWithRetry = async (retries = 3) => {
-                      for (let i = 0; i < retries; i++) {
-                        try {
-                          console.log(`🔍 Calling userExists() (attempt ${i + 1}/${retries})...`);
-                          const userExists = await actor.userExists();
-                          console.log('📊 userExists result:', userExists);
-                          return userExists;
-                        } catch (error) {
-                          console.error(`❌ Error checking user existence (attempt ${i + 1}/${retries}):`, error);
-                          if (i === retries - 1) {
-                            // Остання спроба невдала, показуємо форму реєстрації
-                            console.log('🔄 All retries failed, showing registration form');
-                            return false;
-                          }
-                          // Чекаємо перед повторною спробою
-                          await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
-                        }
-                      }
-                      return false;
-                    };
-
-                    const userExists = await checkUserExistsWithRetry();
+                    // Спрощена логіка: спробуємо отримати кампанії користувача
+                    // Якщо це не викликає помилку, значить користувач існує
+                    let userExists = false;
+                    try {
+                      console.log('🔍 Checking user existence via getUserCampaigns...');
+                      const principal = await actor.whoami();
+                      await actor.getUserCampaigns(principal);
+                      console.log('✅ User exists - getUserCampaigns succeeded');
+                      userExists = true;
+                    } catch (error) {
+                      console.log('❌ User does not exist - getUserCampaigns failed:', error);
+                      userExists = false;
+                    }
                     
                                           if (userExists) {
                         console.log('👤 User exists, going to dashboard');
