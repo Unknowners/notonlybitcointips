@@ -120,8 +120,18 @@ export default function MainApp() {
                       console.log('✅ User exists - getUserCampaigns succeeded');
                       userExists = true;
                     } catch (error) {
-                      console.log('❌ User does not exist - getUserCampaigns failed:', error);
-                      userExists = false;
+                      console.log('❌ getUserCampaigns failed:', error);
+                      // Якщо getUserCampaigns не працює, спробуємо createUser
+                      try {
+                        console.log('🔍 Trying createUser as fallback...');
+                        await actor.createUser("", []);
+                        console.log('✅ createUser succeeded - user exists');
+                        userExists = true;
+                      } catch (createUserError) {
+                        console.log('❌ createUser also failed:', createUserError);
+                        // Якщо обидва методи не працюють, припускаємо що користувач не існує
+                        userExists = false;
+                      }
                     }
                     
                                           if (userExists) {
@@ -250,7 +260,14 @@ export default function MainApp() {
       }
     } catch (error) {
       console.error('❌ Error during registration:', error);
-      setError("Connection error to canister.");
+      // Якщо createUser не існує (production canister), просто переходимо до dashboard
+      if (error && error.toString().includes('Canister has no update method \'createUser\'')) {
+        console.log('🔄 createUser not available, assuming user exists, going to dashboard');
+        setStep("dashboard");
+        // fetchUserCampaigns буде викликано автоматично через useEffect
+      } else {
+        setError("Connection error to canister.");
+      }
     }
     setLoading(false);
   };
