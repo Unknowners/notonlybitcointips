@@ -1,0 +1,14 @@
+{
+  "frontend": {
+    "ic": "YOUR_MAINNET_FRONTEND_CANISTER_ID",
+    "local": "YOUR_LOCAL_FRONTEND_CANISTER_ID"
+  },
+  "user_canister": {
+    "ic": "YOUR_MAINNET_USER_CANISTER_ID", 
+    "local": "YOUR_LOCAL_USER_CANISTER_ID"
+  },
+  "internet_identity": {
+    "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai",
+    "local": "YOUR_LOCAL_INTERNET_IDENTITY_CANISTER_ID"
+  }
+} 

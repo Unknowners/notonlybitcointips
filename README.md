@@ -55,7 +55,20 @@ DApp для створення кампаній збору коштів на Int
    npm run dev
    ```
 
-6. **Відкрийте браузер**
+6. **Налаштуйте canister IDs для локальної розробки**
+   ```bash
+   # Скопіюйте шаблон
+   cp canister_ids.json.example canister_ids.json
+   
+   # Отримайте локальні canister IDs
+   dfx canister id frontend
+   dfx canister id user_canister
+   dfx canister id internet_identity
+   
+   # Оновіть canister_ids.json з отриманими ID
+   ```
+
+7. **Відкрийте браузер**
    - Локальний фронтенд: http://localhost:5173
    - Розгорнутий фронтенд: http://127.0.0.1:4943
 
@@ -97,6 +110,37 @@ notonlybitcointips/
 ## Internet Identity
 
 Проект використовує Internet Identity для авторизації користувачів. При локальній розробці використовується локальний Internet Identity canister.
+
+## Локальна розробка
+
+### Налаштування canister IDs
+
+Після клонування репозиторію та першого запуску:
+
+1. **Скопіюйте шаблон canister IDs:**
+   ```bash
+   cp canister_ids.json.example canister_ids.json
+   ```
+
+2. **Отримайте локальні canister IDs:**
+   ```bash
+   dfx canister id frontend
+   dfx canister id user_canister  
+   dfx canister id internet_identity
+   ```
+
+3. **Оновіть canister_ids.json з отриманими ID**
+
+4. **Створіть .env файл для frontend:**
+   ```bash
+   cd frontend
+   echo "VITE_CANISTER_ID_USER_CANISTER=YOUR_LOCAL_USER_CANISTER_ID" > .env
+   echo "VITE_CANISTER_ID_INTERNET_IDENTITY=YOUR_LOCAL_INTERNET_IDENTITY_ID" >> .env
+   echo "VITE_CANISTER_HOST=http://127.0.0.1:4943" >> .env
+   echo "DFX_NETWORK=local" >> .env
+   ```
+
+**Примітка:** `canister_ids.json` не комітиться в git, оскільки містить локальні canister IDs, які змінюються при кожному перезапуску.
 
 ## Розгортання в Mainnet
 
