@@ -19,12 +19,17 @@ type Campaign = record {
 };
 
 service : {
+  whoami: () -> (principal);
+  getPrincipal: () -> (principal) query;
   createUser: (name: text, email: opt text) -> (bool);
+  userExists: () -> (bool);
+  getAllUsers: () -> (vec User) query;
+  clearUsers: () -> ();
   createCampaign: (name: text, description: text, acceptedTokens: vec text) -> (text);
   getCampaign: (id: text) -> (opt Campaign) query;
   getCampaignSubaccount: (id: text) -> (opt blob) query;
-  getUserCampaigns: (userId: text) -> (vec Campaign) query;
-  whoami: () -> (principal) query;
-  userExists: () -> (bool) query;
-  clearUsers: () -> ();
+  getUserCampaigns: (userId: principal) -> (vec Campaign) query;
+  getAllCampaigns: () -> (vec Campaign) query;
+  debugCompare: (userId: principal) -> (vec record { text; principal; bool }) query;
+  debugPrincipal: (userId: principal) -> (text) query;
 } 

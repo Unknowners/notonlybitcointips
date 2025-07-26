@@ -49,7 +49,6 @@ shared({ caller = initializer }) actor class UserCanister() = {
 
     system func postupgrade() {
         usersMap := HashMap.fromIter<UserId, User>(users.vals(), 0, Principal.equal, Principal.hash);
-        campaigns := [];
         campaignsMap := HashMap.fromIter<CampaignId, Campaign>(campaigns.vals(), 0, Text.equal, Text.hash);
         campaigns := [];
     };
@@ -81,8 +80,8 @@ shared({ caller = initializer }) actor class UserCanister() = {
         return true;
     };
 
-    public query func userExists() : async Bool {
-        switch (usersMap.get(initializer)) {
+    public shared({ caller }) func userExists() : async Bool {
+        switch (usersMap.get(caller)) {
             case (?user) { return true; };
             case null { return false; };
         };
