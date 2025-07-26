@@ -39,16 +39,20 @@ export default function MainApp() {
   // Налаштування мережі
   const isMainnet = window.location.hostname.includes('ic0.app') || 
                    window.location.hostname.includes('icp0.io') ||
-                   import.meta.env.DFX_NETWORK === 'ic';
+                   import.meta.env.VITE_DFX_NETWORK === 'ic';
+  
+  const internetIdentityCanisterId = import.meta.env.VITE_CANISTER_ID_INTERNET_IDENTITY;
   
   const identityProvider = isMainnet
     ? 'https://identity.ic0.app' // Mainnet
-    : `http://${import.meta.env.VITE_CANISTER_ID_INTERNET_IDENTITY}.localhost:4943`; // Local
+    : `http://${internetIdentityCanisterId || 'u6s2n-gx777-77774-qaaba-cai'}.localhost:4943`; // Local
     
   console.log('🌐 Network detection:', {
     hostname: window.location.hostname,
     isMainnet,
-    identityProvider
+    identityProvider,
+    VITE_CANISTER_ID_INTERNET_IDENTITY: import.meta.env.VITE_CANISTER_ID_INTERNET_IDENTITY,
+    VITE_DFX_NETWORK: import.meta.env.VITE_DFX_NETWORK
   });
 
   // Ініціалізація авторизації
@@ -73,7 +77,12 @@ export default function MainApp() {
   const updateActor = async () => {
     try {
       console.log('🔄 updateActor: Starting...');
-      const authClient = await AuthClient.create();
+      const authClient = await AuthClient.create({
+        idleOptions: {
+          disableDefaultIdleCallback: true,
+          disableIdle: true
+        }
+      });
       const identity = authClient.getIdentity();
       const actor = createActor(identity);
       const isAuthenticated = await authClient.isAuthenticated();

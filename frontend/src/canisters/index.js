@@ -7,7 +7,7 @@ export const canisterId = import.meta.env.VITE_CANISTER_ID_USER_CANISTER || "g7k
 // local and production deployments.
 const isMainnet = window.location.hostname.includes('ic0.app') || 
                  window.location.hostname.includes('icp0.io') ||
-                 import.meta.env.DFX_NETWORK === 'ic';
+                 import.meta.env.VITE_DFX_NETWORK === 'ic';
 
 const defaultHost = isMainnet ? "https://ic0.app" : "http://127.0.0.1:4943";
 const host = import.meta.env.VITE_CANISTER_HOST || defaultHost;
@@ -15,7 +15,8 @@ const host = import.meta.env.VITE_CANISTER_HOST || defaultHost;
 console.log('🌐 Canister host detection:', {
   hostname: window.location.hostname,
   isMainnet,
-  host
+  host,
+  VITE_DFX_NETWORK: import.meta.env.VITE_DFX_NETWORK
 });
 
 // Create a default agent for anonymous calls
@@ -32,6 +33,13 @@ export const user_canister = Actor.createActor(idlFactory, {
 
 // Function to create an actor with custom identity
 export const createActor = (identity) => {
+  console.log('🔧 createActor called with:', {
+    identity: !!identity,
+    host,
+    canisterId,
+    isMainnet
+  });
+  
   const agent = new HttpAgent({ 
     host,
     identity 
