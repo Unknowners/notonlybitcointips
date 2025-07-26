@@ -37,11 +37,19 @@ export default function MainApp() {
   });
 
   // Налаштування мережі
-  const network = import.meta.env.DFX_NETWORK || 'local';
-  const identityProvider =
-    network === 'ic'
-      ? 'https://identity.ic0.app' // Mainnet
-      : 'http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943'; // Local
+  const isMainnet = window.location.hostname.includes('ic0.app') || 
+                   window.location.hostname.includes('icp0.io') ||
+                   import.meta.env.DFX_NETWORK === 'ic';
+  
+  const identityProvider = isMainnet
+    ? 'https://identity.ic0.app' // Mainnet
+    : 'http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943'; // Local
+    
+  console.log('🌐 Network detection:', {
+    hostname: window.location.hostname,
+    isMainnet,
+    identityProvider
+  });
 
   // Ініціалізація авторизації
   useEffect(() => {

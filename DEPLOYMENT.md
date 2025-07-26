@@ -28,7 +28,7 @@ sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
 
 ```bash
 # Ініціалізація identity для mainnet
-dfx identity new mainnet-identity --disable-encryption
+dfx identity new mainnet-identity
 
 # Встановлення як активна identity
 dfx identity use mainnet-identity
