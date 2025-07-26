@@ -22,10 +22,9 @@ type UserCanister = service {
   getAllCampaigns : () -> (vec Campaign) query;
   getAllUsers : () -> (vec User) query;
   getCampaign : (text) -> (opt Campaign) query;
-  getMyCampaigns : () -> (vec Campaign);
   getPrincipal : () -> (principal) query;
   getUserCampaigns : (UserId) -> (vec Campaign) query;
-  userExists : () -> (bool);
+  userExists : () -> (bool) query;
   whoami : () -> (principal);
 };
 type UserId = principal;

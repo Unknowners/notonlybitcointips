@@ -37,10 +37,10 @@ function updateCanisterIds() {
   if (fs.existsSync(frontendIndexPath)) {
     let content = fs.readFileSync(frontendIndexPath, 'utf8');
     
-    // Замінюємо canister ID
+    // Замінюємо production canister ID
     content = content.replace(
-      /export const canisterId = "[^"]*";/,
-      `export const canisterId = "${userCanisterId}";`
+      /"g7k3j-maaaa-aaaah-arinq-cai" \/\/ Production canister ID/,
+      `"${userCanisterId}" // Production canister ID`
     );
     
     fs.writeFileSync(frontendIndexPath, content);

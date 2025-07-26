@@ -32,10 +32,9 @@ export const idlFactory = ({ IDL }) => {
     'getAllCampaigns' : IDL.Func([], [IDL.Vec(Campaign)], ['query']),
     'getAllUsers' : IDL.Func([], [IDL.Vec(User)], ['query']),
     'getCampaign' : IDL.Func([IDL.Text], [IDL.Opt(Campaign)], ['query']),
-    'getMyCampaigns' : IDL.Func([], [IDL.Vec(Campaign)], []),
     'getPrincipal' : IDL.Func([], [IDL.Principal], ['query']),
     'getUserCampaigns' : IDL.Func([UserId], [IDL.Vec(Campaign)], ['query']),
-    'userExists' : IDL.Func([], [IDL.Bool], []),
+    'userExists' : IDL.Func([], [IDL.Bool], ['query']),
     'whoami' : IDL.Func([], [IDL.Principal], []),
   });
   return UserCanister;

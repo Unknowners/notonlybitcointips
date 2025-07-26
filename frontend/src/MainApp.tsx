@@ -208,8 +208,9 @@ export default function MainApp() {
     const fetchWithRetry = async (retries = 3) => {
       for (let i = 0; i < retries; i++) {
         try {
-          // Використовуємо getMyCampaigns для отримання кампаній поточного користувача
-          const res = await authState.actor.getMyCampaigns() as Campaign[];
+          // Використовуємо whoami + getUserCampaigns для отримання кампаній поточного користувача
+          const principal = await authState.actor.whoami();
+          const res = await authState.actor.getUserCampaigns(principal.toString()) as Campaign[];
           // Конвертуємо BigInt в string для JSON
           const campaignsForDisplay = res.map(campaign => ({
             ...campaign,

@@ -79,8 +79,8 @@ shared({ caller = initializer }) actor class UserCanister() = {
         return true;
     };
 
-    public shared({ caller }) func userExists() : async Bool {
-        switch (usersMap.get(caller)) {
+    public query func userExists() : async Bool {
+        switch (usersMap.get(initializer)) {
             case (?user) { return true; };
             case null { return false; };
         };
@@ -131,16 +131,7 @@ shared({ caller = initializer }) actor class UserCanister() = {
         return userCampaigns;
     };
     
-    // Get campaigns for current user (shared version)
-    public shared({ caller }) func getMyCampaigns() : async [Campaign] {
-        let userCampaigns = Array.filter<Campaign>(
-            Iter.toArray(campaignsMap.vals()),
-            func (campaign: Campaign) : Bool {
-                Principal.equal(campaign.owner, caller)
-            }
-        );
-        return userCampaigns;
-    };
+
 
     // (DEBUG) Get all campaigns for diagnostics
     public query func getAllCampaigns() : async [Campaign] {
