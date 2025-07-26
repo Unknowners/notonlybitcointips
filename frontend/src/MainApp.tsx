@@ -33,7 +33,7 @@ export default function MainApp() {
     actor: undefined as any,
     authClient: undefined as AuthClient | undefined,
     isAuthenticated: false,
-    principal: 'Натисніть "Whoami" щоб побачити ваш Principal ID'
+    principal: 'Click "Whoami" to see your Principal ID'
   });
 
   // Налаштування мережі
@@ -177,7 +177,7 @@ export default function MainApp() {
     console.log('🔍 Calling whoami...');
     setAuthState((prev) => ({
       ...prev,
-      principal: 'Завантаження...'
+      principal: 'Loading...'
     }));
 
     try {
@@ -192,7 +192,7 @@ export default function MainApp() {
       console.error('❌ Error calling whoami:', error);
       setAuthState((prev) => ({
         ...prev,
-        principal: 'Помилка отримання Principal ID'
+        principal: 'Error getting Principal ID'
       }));
     }
   };
@@ -269,11 +269,11 @@ export default function MainApp() {
         }, 100);
       } else {
         console.log('❌ Registration failed - user already exists');
-        setError("Користувач вже існує або помилка реєстрації.");
+        setError("User already exists or registration error.");
       }
     } catch (error) {
       console.error('❌ Error during registration:', error);
-      setError("Помилка підключення до canister.");
+      setError("Connection error to canister.");
     }
     setLoading(false);
   };
@@ -288,14 +288,14 @@ export default function MainApp() {
         campaign.description,
         campaign.tokens
       );
-      console.log("Кампанія створена, id:", res);
+      console.log("Campaign created, id:", res);
       setCampaignId(res);
       setStep("dashboard");
       console.log("step:", "dashboard");
       fetchUserCampaigns();
     } catch (err) {
-      setError("Помилка створення кампанії.");
-      console.error("Помилка створення кампанії:", err);
+      setError("Error creating campaign.");
+      console.error("Error creating campaign:", err);
     }
     setLoading(false);
   };
@@ -312,14 +312,14 @@ export default function MainApp() {
             </svg>
           </div>
           <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-1 drop-shadow-lg">
-            {step === "auth" && "Вітаємо у Donation Hub"}
-            {step === "register" && "Завершіть реєстрацію"}
-            {step === "dashboard" && "Створіть свою кампанію"}
+            {step === "auth" && "Not Only Bitcoin Tips"}
+            {step === "register" && "Complete Registration"}
+            {step === "dashboard" && "Create Your Campaign"}
           </h1>
           <p className="text-gray-500 text-center text-lg font-medium">
-            {step === "auth" && "Увійдіть через Internet Identity для створення зборів"}
-            {step === "register" && "Заповніть додаткову інформацію"}
-            {step === "dashboard" && "Заповніть форму для старту збору"}
+            {step === "auth" && "Sign in with Internet Identity to create donation campaigns"}
+            {step === "register" && "Fill in additional information"}
+            {step === "dashboard" && "Fill out the form to start a donation campaign"}
           </p>
         </div>
 
@@ -328,21 +328,21 @@ export default function MainApp() {
           <div className="space-y-6">
             <div className="text-center">
               <p className="text-gray-600 mb-4">
-                Для використання додатку потрібно увійти через Internet Identity
+                To use the application, you need to sign in with Internet Identity
               </p>
               <button
                 onClick={login}
                 className="w-full bg-gradient-to-r from-blue-600 to-indigo-500 text-white py-3 rounded-xl font-bold text-lg shadow-lg hover:scale-105 active:scale-95 transition-all duration-200"
               >
-                Увійти через Internet Identity
+                Sign in with Internet Identity
               </button>
             </div>
             
             <div className="bg-blue-50 rounded-lg p-4">
-              <h3 className="font-semibold text-blue-900 mb-2">Що таке Internet Identity?</h3>
+              <h3 className="font-semibold text-blue-900 mb-2">What is Internet Identity?</h3>
               <p className="text-blue-800 text-sm">
-                Internet Identity - це система авторизації від DFINITY, яка дозволяє безпечно увійти в dApp без паролів, 
-                використовуючи ваш пристрій або браузер як ключ.
+                Internet Identity is an authentication system from DFINITY that allows you to securely sign in to dApps without passwords, 
+                using your device or browser as a key.
               </p>
             </div>
           </div>
@@ -351,20 +351,20 @@ export default function MainApp() {
         {/* Інформація про Principal ID */}
         {authState.isAuthenticated && (
           <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-            <h3 className="font-semibold text-gray-900 mb-2">Ваш Principal ID:</h3>
+            <h3 className="font-semibold text-gray-900 mb-2">Your Principal ID:</h3>
             <p className="text-sm text-gray-600 font-mono break-all mb-2">{authState.principal}</p>
             <div className="flex gap-2">
               <button
                 onClick={whoami}
                 className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition"
               >
-                Оновити
+                Update
               </button>
               <button
                 onClick={logout}
                 className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition"
               >
-                Вийти
+                Sign Out
               </button>
             </div>
           </div>
@@ -373,7 +373,7 @@ export default function MainApp() {
         {/* Список кампаній користувача */}
         {step === "dashboard" && (
           <div className="mb-8">
-            <h2 className="text-lg font-bold mb-2 text-gray-800">Ваші кампанії</h2>
+            <h2 className="text-lg font-bold mb-2 text-gray-800">Your Campaigns</h2>
             <ul className="space-y-2">
               {userCampaigns.map((c, i) => (
                 <li key={i} className="bg-gray-100 rounded-lg px-4 py-2 flex justify-between items-center">
@@ -382,7 +382,7 @@ export default function MainApp() {
                     <div className="text-gray-500 text-sm">{c.description}</div>
                     <div className="text-xs text-gray-400">Created: {new Date(Number(c.createdAt) / 1_000_000).toLocaleString()}</div>
                   </div>
-                  <a href={`/donate/${c.id}`} className="text-blue-600 hover:underline font-bold">Перейти</a>
+                  <a href={`/donate/${c.id}`} className="text-blue-600 hover:underline font-bold">Go to</a>
                 </li>
               ))}
             </ul>
@@ -392,19 +392,19 @@ export default function MainApp() {
         {step === "register" && (
           <form className="space-y-6" onSubmit={handleRegister}>
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Ім'я</label>
+              <label className="block text-gray-700 font-semibold mb-2">Name</label>
               <input
                 type="text"
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg transition"
                 required
                 value={user.name}
                 onChange={e => setUser(u => ({ ...u, name: e.target.value }))}
-                placeholder="Введіть ім'я"
+                placeholder="Enter your name"
                 autoFocus
               />
             </div>
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Email <span className="text-gray-400 font-normal">(необов'язково)</span></label>
+              <label className="block text-gray-700 font-semibold mb-2">Email <span className="text-gray-400 font-normal">(optional)</span></label>
               <input
                 type="email"
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg transition"
@@ -419,7 +419,7 @@ export default function MainApp() {
               className="w-full bg-gradient-to-r from-blue-600 to-indigo-500 text-white py-3 rounded-xl font-bold text-lg shadow-lg hover:scale-105 active:scale-95 transition-all duration-200"
               disabled={loading}
             >
-              {loading ? "Реєстрація..." : "Завершити реєстрацію"}
+              {loading ? "Registering..." : "Complete Registration"}
             </button>
           </form>
         )}
@@ -427,29 +427,29 @@ export default function MainApp() {
         {step === "dashboard" && (
           <form className="space-y-6" onSubmit={e => { console.log("submit"); handleCreateCampaign(e); }}>
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Назва кампанії</label>
+              <label className="block text-gray-700 font-semibold mb-2">Campaign Name</label>
               <input
                 type="text"
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-lg transition"
                 required
                 value={campaign.name}
                 onChange={e => setCampaign(c => ({ ...c, name: e.target.value }))}
-                placeholder="Наприклад, Підтримка волонтерів"
+                placeholder="e.g., Volunteer Support"
                 autoFocus
               />
             </div>
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Опис</label>
+              <label className="block text-gray-700 font-semibold mb-2">Description</label>
               <textarea
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-lg transition min-h-[80px]"
                 required
                 value={campaign.description}
                 onChange={e => setCampaign(c => ({ ...c, description: e.target.value }))}
-                placeholder="Опишіть мету збору..."
+                placeholder="Describe the purpose of the campaign..."
               />
             </div>
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Валюти для донатів</label>
+              <label className="block text-gray-700 font-semibold mb-2">Currencies for Donations</label>
               <div className="flex flex-wrap gap-3">
                 {TOKENS.map(token => (
                   <label key={token} className="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg shadow-sm cursor-pointer hover:bg-blue-50 transition">
@@ -477,7 +477,7 @@ export default function MainApp() {
               className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-3 rounded-xl font-bold text-lg shadow-lg hover:scale-105 active:scale-95 transition-all duration-200"
               disabled={loading}
             >
-              {loading ? "Створення..." : "Створити кампанію"}
+              {loading ? "Creating..." : "Create Campaign"}
             </button>
           </form>
         )}
@@ -491,15 +491,15 @@ export default function MainApp() {
                   <path d="M8 12l2.5 2.5L16 9" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Кампанію створено!</h2>
-              <p className="text-gray-600 text-center mb-2">Поділіться цим лінком або QR-кодом:</p>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Campaign Created!</h2>
+              <p className="text-gray-600 text-center mb-2">Share this link or QR code:</p>
               <div className="mb-2 break-all text-blue-700 underline text-center text-lg font-mono select-all cursor-pointer" onClick={() => navigator.clipboard.writeText(`${window.location.origin}/donate/${campaignId}`)}>
                 {`${window.location.origin}/donate/${campaignId}`}
               </div>
               <div className="flex justify-center my-4">
                 <QRCodeSVG value={`${window.location.origin}/donate/${campaignId}`} size={200} bgColor="#fff" fgColor="#1e293b" className="rounded-xl shadow-xl border-4 border-white" />
               </div>
-              <div className="text-gray-500 text-sm text-center">Відскануйте QR-код або скопіюйте лінк, щоб поділитись кампанією у соцмережах чи месенджерах.</div>
+              <div className="text-gray-500 text-sm text-center">Scan the QR code or copy the link to share the campaign on social networks or messengers.</div>
             </div>
             <button
               className="w-full bg-gradient-to-r from-blue-600 to-indigo-500 text-white py-3 rounded-xl font-bold text-lg shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 mt-2"
@@ -510,7 +510,7 @@ export default function MainApp() {
                 fetchUserCampaigns();
               }}
             >
-              Створити ще одну кампанію
+              Create Another Campaign
             </button>
           </>
         )}
