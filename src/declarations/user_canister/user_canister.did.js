@@ -1,22 +1,21 @@
 export const idlFactory = ({ IDL }) => {
-  const CampaignId = IDL.Text;
   const UserId = IDL.Principal;
-  const Time = IDL.Int;
+  const CampaignId = IDL.Text;
   const Campaign = IDL.Record({
     'id' : CampaignId,
     'owner' : UserId,
     'name' : IDL.Text,
-    'createdAt' : Time,
+    'createdAt' : IDL.Nat64,
     'acceptedTokens' : IDL.Vec(IDL.Text),
     'description' : IDL.Text,
   });
   const User = IDL.Record({
     'id' : UserId,
     'name' : IDL.Text,
-    'createdAt' : Time,
+    'createdAt' : IDL.Nat64,
     'email' : IDL.Opt(IDL.Text),
   });
-  return IDL.Service({
+  const UserCanister = IDL.Service({
     'clearUsers' : IDL.Func([], [], []),
     'createCampaign' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Vec(IDL.Text)],
@@ -25,16 +24,20 @@ export const idlFactory = ({ IDL }) => {
       ),
     'createUser' : IDL.Func([IDL.Text, IDL.Opt(IDL.Text)], [IDL.Bool], []),
     'debugCompare' : IDL.Func(
-        [IDL.Principal],
+        [UserId],
         [IDL.Vec(IDL.Tuple(IDL.Text, IDL.Principal, IDL.Bool))],
         ['query'],
       ),
-    'debugPrincipal' : IDL.Func([IDL.Principal], [IDL.Text], ['query']),
+    'debugPrincipal' : IDL.Func([UserId], [IDL.Text], ['query']),
     'getAllCampaigns' : IDL.Func([], [IDL.Vec(Campaign)], ['query']),
     'getAllUsers' : IDL.Func([], [IDL.Vec(User)], ['query']),
-    'getCampaign' : IDL.Func([CampaignId], [IDL.Opt(Campaign)], ['query']),
+    'getCampaign' : IDL.Func([IDL.Text], [IDL.Opt(Campaign)], ['query']),
+    'getMyCampaigns' : IDL.Func([], [IDL.Vec(Campaign)], []),
+    'getPrincipal' : IDL.Func([], [IDL.Principal], ['query']),
     'getUserCampaigns' : IDL.Func([UserId], [IDL.Vec(Campaign)], ['query']),
-    'whoami' : IDL.Func([], [IDL.Principal], ['query']),
+    'userExists' : IDL.Func([], [IDL.Bool], []),
+    'whoami' : IDL.Func([], [IDL.Principal], []),
   });
+  return UserCanister;
 };
 export const init = ({ IDL }) => { return []; };

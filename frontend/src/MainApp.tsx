@@ -66,6 +66,11 @@ export default function MainApp() {
     updateActor();
   }, []);
 
+  // Очищаємо кампанії при зміні actor (новий користувач)
+  useEffect(() => {
+    setUserCampaigns([]);
+  }, [authState.actor]);
+
   // Автоматично завантажуємо кампанії коли actor стає доступним і користувач на dashboard
   useEffect(() => {
     if (authState.actor && step === "dashboard") {
@@ -132,10 +137,7 @@ export default function MainApp() {
                         console.log('👤 User exists, going to dashboard');
                         // Користувач вже існує, переходимо до dashboard
                         setStep("dashboard");
-                        // Використовуємо поточний actor замість authState.actor
-                        setTimeout(() => {
-                          fetchUserCampaigns();
-                        }, 100);
+                        // fetchUserCampaigns буде викликано автоматично через useEffect
                       } else {
                       console.log('🆕 User does not exist, showing registration form');
                       // Користувач не існує, показуємо форму реєстрації
@@ -164,6 +166,8 @@ export default function MainApp() {
     await authState.authClient.logout();
     updateActor();
     setStep("auth");
+    // Очищаємо кампанії при logout
+    setUserCampaigns([]);
   };
 
   const whoami = async () => {
@@ -195,8 +199,7 @@ export default function MainApp() {
   // --- КАМПАНІЇ КОРИСТУВАЧА ---
   
   const fetchUserCampaigns = async () => {
-    const currentActor = authState.actor;
-    if (!currentActor || isFetchingCampaigns) {
+    if (!authState.actor || isFetchingCampaigns) {
       return;
     }
     
@@ -205,8 +208,8 @@ export default function MainApp() {
     const fetchWithRetry = async (retries = 3) => {
       for (let i = 0; i < retries; i++) {
         try {
-          const principal = await currentActor.whoami();
-          const res = await currentActor.getUserCampaigns(principal.toString()) as Campaign[];
+          // Використовуємо getMyCampaigns для отримання кампаній поточного користувача
+          const res = await authState.actor.getMyCampaigns() as Campaign[];
           // Конвертуємо BigInt в string для JSON
           const campaignsForDisplay = res.map(campaign => ({
             ...campaign,
@@ -248,10 +251,7 @@ export default function MainApp() {
       if (res) {
         console.log('✅ Registration successful, going to dashboard');
         setStep("dashboard");
-        // Використовуємо поточний actor замість authState.actor
-        setTimeout(() => {
-          fetchUserCampaigns();
-        }, 100);
+        // fetchUserCampaigns буде викликано автоматично через useEffect
       } else {
         console.log('❌ Registration failed - user already exists');
         setError("User already exists or registration error.");
@@ -284,7 +284,7 @@ export default function MainApp() {
       setCampaignId(res);
       setStep("dashboard");
       console.log("step:", "dashboard");
-      fetchUserCampaigns();
+      // fetchUserCampaigns буде викликано автоматично через useEffect
     } catch (err) {
       setError("Error creating campaign.");
       console.error("Error creating campaign:", err);

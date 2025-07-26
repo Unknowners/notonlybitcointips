@@ -1,37 +1,41 @@
 type UserId = principal;
+type UserCanister = 
+ service {
+   clearUsers: () -> ();
+   createCampaign: (name: text, description: text, acceptedTokens:
+    vec text) -> (text);
+   createUser: (name: text, email: opt text) -> (bool);
+   debugCompare: (userId: UserId) ->
+    (vec record {
+           text;
+           principal;
+           bool;
+         }) query;
+   debugPrincipal: (userId: UserId) -> (text) query;
+   getAllCampaigns: () -> (vec Campaign) query;
+   getAllUsers: () -> (vec User) query;
+   getCampaign: (id: text) -> (opt Campaign) query;
+   getMyCampaigns: () -> (vec Campaign);
+   getPrincipal: () -> (principal) query;
+   getUserCampaigns: (userId: UserId) -> (vec Campaign) query;
+   userExists: () -> (bool);
+   whoami: () -> (principal);
+ };
 type User = 
  record {
-   createdAt: Time;
+   createdAt: nat64;
    email: opt text;
    id: UserId;
    name: text;
  };
-type Time = int;
 type CampaignId = text;
 type Campaign = 
  record {
    acceptedTokens: vec text;
-   createdAt: Time;
+   createdAt: nat64;
    description: text;
    id: CampaignId;
    name: text;
    owner: UserId;
  };
-service : {
-  clearUsers: () -> ();
-  createCampaign: (name: text, description: text, acceptedTokens:
-   vec text) -> (text);
-  createUser: (name: text, email: opt text) -> (bool);
-  debugCompare: (userId: principal) ->
-   (vec record {
-          text;
-          principal;
-          bool;
-        }) query;
-  debugPrincipal: (userId: principal) -> (text) query;
-  getAllCampaigns: () -> (vec Campaign) query;
-  getAllUsers: () -> (vec User) query;
-  getCampaign: (id: CampaignId) -> (opt Campaign) query;
-  getUserCampaigns: (userId: UserId) -> (vec Campaign) query;
-  whoami: () -> (principal) query;
-}
+service : () -> UserCanister

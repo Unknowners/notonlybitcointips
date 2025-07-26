@@ -6,33 +6,33 @@ export interface Campaign {
   'id' : CampaignId,
   'owner' : UserId,
   'name' : string,
-  'createdAt' : Time,
+  'createdAt' : bigint,
   'acceptedTokens' : Array<string>,
   'description' : string,
 }
 export type CampaignId = string;
-export type Time = bigint;
 export interface User {
   'id' : UserId,
   'name' : string,
-  'createdAt' : Time,
+  'createdAt' : bigint,
   'email' : [] | [string],
 }
-export type UserId = Principal;
-export interface _SERVICE {
+export interface UserCanister {
   'clearUsers' : ActorMethod<[], undefined>,
   'createCampaign' : ActorMethod<[string, string, Array<string>], string>,
   'createUser' : ActorMethod<[string, [] | [string]], boolean>,
-  'debugCompare' : ActorMethod<
-    [Principal],
-    Array<[string, Principal, boolean]>
-  >,
-  'debugPrincipal' : ActorMethod<[Principal], string>,
+  'debugCompare' : ActorMethod<[UserId], Array<[string, Principal, boolean]>>,
+  'debugPrincipal' : ActorMethod<[UserId], string>,
   'getAllCampaigns' : ActorMethod<[], Array<Campaign>>,
   'getAllUsers' : ActorMethod<[], Array<User>>,
-  'getCampaign' : ActorMethod<[CampaignId], [] | [Campaign]>,
+  'getCampaign' : ActorMethod<[string], [] | [Campaign]>,
+  'getMyCampaigns' : ActorMethod<[], Array<Campaign>>,
+  'getPrincipal' : ActorMethod<[], Principal>,
   'getUserCampaigns' : ActorMethod<[UserId], Array<Campaign>>,
+  'userExists' : ActorMethod<[], boolean>,
   'whoami' : ActorMethod<[], Principal>,
 }
+export type UserId = Principal;
+export interface _SERVICE extends UserCanister {}
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

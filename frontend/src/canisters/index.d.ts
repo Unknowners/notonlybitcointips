@@ -4,6 +4,7 @@ export const user_canister: {
   createCampaign: (name: string, description: string, acceptedTokens: string[]) => Promise<string>;
   getCampaign: (id: string) => Promise<any>;
   getUserCampaigns: (userId: string) => Promise<any[]>;
+  getMyCampaigns: () => Promise<any[]>;
   whoami: () => Promise<any>;
   userExists: () => Promise<boolean>;
   clearUsers: () => Promise<void>;
@@ -14,6 +15,7 @@ export const createActor: (identity: any) => {
   createCampaign: (name: string, description: string, acceptedTokens: string[]) => Promise<string>;
   getCampaign: (id: string) => Promise<any>;
   getUserCampaigns: (userId: string) => Promise<any[]>;
+  getMyCampaigns: () => Promise<any[]>;
   whoami: () => Promise<any>;
   userExists: () => Promise<boolean>;
   clearUsers: () => Promise<void>;

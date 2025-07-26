@@ -15,8 +15,10 @@ type UserCanister =
    getAllCampaigns: () -> (vec Campaign) query;
    getAllUsers: () -> (vec User) query;
    getCampaign: (id: text) -> (opt Campaign) query;
+   getMyCampaigns: () -> (vec Campaign);
+   getPrincipal: () -> (principal) query;
    getUserCampaigns: (userId: UserId) -> (vec Campaign) query;
-   userExists: () -> (bool) query;
+   userExists: () -> (bool);
    whoami: () -> (principal);
  };
 type User = 

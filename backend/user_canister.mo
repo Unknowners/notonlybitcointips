@@ -56,6 +56,11 @@ shared({ caller = initializer }) actor class UserCanister() = {
     public shared({ caller }) func whoami() : async Principal {
         return caller;
     };
+    
+    // Query version for compatibility
+    public query func getPrincipal() : async Principal {
+        return Principal.fromText("2vxsx-fae"); // Anonymous principal for query calls
+    };
 
     // User management
     public shared({ caller }) func createUser(name: Text, email: ?Text) : async Bool {
@@ -74,8 +79,8 @@ shared({ caller = initializer }) actor class UserCanister() = {
         return true;
     };
 
-    public query func userExists() : async Bool {
-        switch (usersMap.get(initializer)) {
+    public shared({ caller }) func userExists() : async Bool {
+        switch (usersMap.get(caller)) {
             case (?user) { return true; };
             case null { return false; };
         };
@@ -121,6 +126,17 @@ shared({ caller = initializer }) actor class UserCanister() = {
             Iter.toArray(campaignsMap.vals()),
             func (campaign: Campaign) : Bool {
                 Principal.equal(campaign.owner, userId)
+            }
+        );
+        return userCampaigns;
+    };
+    
+    // Get campaigns for current user (shared version)
+    public shared({ caller }) func getMyCampaigns() : async [Campaign] {
+        let userCampaigns = Array.filter<Campaign>(
+            Iter.toArray(campaignsMap.vals()),
+            func (campaign: Campaign) : Bool {
+                Principal.equal(campaign.owner, caller)
             }
         );
         return userCampaigns;
