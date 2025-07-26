@@ -1,17 +1,27 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { user_canister } from "./canisters/index.js";
+import { QRCodeSVG } from "qrcode.react";
+import { user_canister, canisterId } from "./canisters/index.js";
+import { accountIdentifier } from "./account";
 
 export default function CampaignPage() {
   const { id } = useParams();
   const [campaign, setCampaign] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [account, setAccount] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
       user_canister.getCampaign(id).then((res: any) => {
         setCampaign(res[0] || null);
         setLoading(false);
+      });
+      user_canister.getCampaignSubaccount(id).then(async (res: any) => {
+        if (res[0]) {
+          const sub = new Uint8Array(res[0]);
+          const acc = await accountIdentifier(canisterId, sub);
+          setAccount(acc);
+        }
       });
     }
   }, [id]);
@@ -32,6 +42,14 @@ export default function CampaignPage() {
             ))}
           </div>
         </div>
+        {account && (
+          <div className="mb-4 text-center">
+            <p className="text-sm text-gray-600 break-all font-mono mb-2">{account}</p>
+            <div className="flex justify-center">
+              <QRCodeSVG value={account} size={128} bgColor="#fff" fgColor="#1e293b" className="rounded-md shadow-md" />
+            </div>
+          </div>
+        )}
         <button className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-3 rounded-xl font-bold text-lg shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 mt-4">
           Donate
         </button>

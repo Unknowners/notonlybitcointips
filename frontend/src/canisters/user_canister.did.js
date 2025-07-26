@@ -6,6 +6,7 @@ export const idlFactory = ({ IDL }) => {
     'owner' : UserId,
     'name' : IDL.Text,
     'createdAt' : IDL.Nat64,
+    'subaccount' : IDL.Vec(IDL.Nat8),
     'acceptedTokens' : IDL.Vec(IDL.Text),
     'description' : IDL.Text,
   });
@@ -32,6 +33,9 @@ export const idlFactory = ({ IDL }) => {
     'getAllCampaigns' : IDL.Func([], [IDL.Vec(Campaign)], ['query']),
     'getAllUsers' : IDL.Func([], [IDL.Vec(User)], ['query']),
     'getCampaign' : IDL.Func([IDL.Text], [IDL.Opt(Campaign)], ['query']),
+    'getCampaignSubaccount' : IDL.Func([
+        IDL.Text
+      ], [IDL.Opt(IDL.Vec(IDL.Nat8))], ['query']),
     'getPrincipal' : IDL.Func([], [IDL.Principal], ['query']),
     'getUserCampaigns' : IDL.Func([UserId], [IDL.Vec(Campaign)], ['query']),
     'userExists' : IDL.Func([], [IDL.Bool], ['query']),

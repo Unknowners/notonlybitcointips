@@ -8,6 +8,7 @@ import Iter "mo:base/Iter";
 import Option "mo:base/Option";
 import Debug "mo:base/Debug";
 import Error "mo:base/Error";
+import Blob "mo:base/Blob";
 import Int "mo:base/Int";
 
 shared({ caller = initializer }) actor class UserCanister() = {
@@ -29,6 +30,7 @@ shared({ caller = initializer }) actor class UserCanister() = {
         description: Text;
         owner: UserId;
         acceptedTokens: [Text];
+        subaccount: Blob;
         createdAt: Nat64;
     };
 
@@ -94,20 +96,30 @@ shared({ caller = initializer }) actor class UserCanister() = {
         usersMap := HashMap.HashMap<UserId, User>(0, Principal.equal, Principal.hash);
     };
 
+    private func generateSubaccount(id : Text) : Blob {
+        let bytes = Text.encodeUtf8(id);
+        let padded = Array.tabulate<Nat8>(32, func(i : Nat) : Nat8 {
+            if (i < bytes.size()) { bytes[i] } else { 0 }
+        });
+        Blob.fromArray(padded);
+    };
+
     // Campaign management
     public shared({ caller }) func createCampaign(name: Text, description: Text, acceptedTokens: [Text]) : async Text {
         if (Text.size(name) == 0 or Text.size(description) == 0) {
             return "";
         };
-        
+
         let campaignId = Nat64.toText(Nat64.fromNat(Int.abs(Time.now())));
-        
+        let subaccount = generateSubaccount(campaignId);
+
         let campaign: Campaign = {
             id = campaignId;
             name = name;
             description = description;
             owner = caller;
             acceptedTokens = acceptedTokens;
+            subaccount = subaccount;
             createdAt = Nat64.fromNat(Int.abs(Time.now()));
         };
         
@@ -118,6 +130,13 @@ shared({ caller = initializer }) actor class UserCanister() = {
     // Get campaign by id
     public query func getCampaign(id: Text) : async ?Campaign {
         campaignsMap.get(id)
+    };
+
+    public query func getCampaignSubaccount(id: Text) : async ?Blob {
+        switch (campaignsMap.get(id)) {
+            case (?c) { ?c.subaccount };
+            case null { null };
+        }
     };
 
     // (Optional) Get all campaigns for a user

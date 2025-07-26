@@ -61,6 +61,12 @@ cd frontend && npm run dev
 - [ ] QR codes are generated properly
 - [ ] Campaign links work correctly
 
+### Verifying ICP Deposits
+
+1. Obtain the campaign's deposit account from the campaign page.
+2. Send a small amount of ICP to this account using your wallet or the ledger canister.
+3. Check the balance of the subaccount via the ledger canister to confirm the deposit.
+
 ### Data Persistence
 
 - [ ] Campaigns persist after page refresh

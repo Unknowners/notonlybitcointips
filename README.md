@@ -96,6 +96,12 @@ DApp for creating fundraising campaigns on Internet Computer with Internet Ident
 - Share the link or QR code to collect donations
 - Support for multiple cryptocurrencies
 
+### Sending ICP Donations
+
+Each campaign has its own ICP account identifier. Send ICP tokens from your wallet directly to this address. The identifier is derived from the canister ID and a unique subaccount stored with the campaign.
+
+For local testing the address works with the local ledger. In production use the same address on the mainnet ledger. Configure `VITE_CANISTER_HOST` and `VITE_DFX_NETWORK` in `frontend/.env` to switch between environments.
+
 ## Project Structure
 
 ```
