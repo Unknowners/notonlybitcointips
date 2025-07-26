@@ -1,7 +1,7 @@
 import { Actor, HttpAgent } from "@dfinity/agent";
 import { idlFactory } from './user_canister.did.js';
 
-export const canisterId = "g7k3j-maaaa-aaaah-arinq-cai"; // оновлений canister ID
+export const canisterId = import.meta.env.VITE_CANISTER_ID_USER_CANISTER || "g7k3j-maaaa-aaaah-arinq-cai";
 
 // Determine canister host from environment variables for flexibility between
 // local and production deployments.

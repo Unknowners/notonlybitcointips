@@ -43,7 +43,7 @@ export default function MainApp() {
   
   const identityProvider = isMainnet
     ? 'https://identity.ic0.app' // Mainnet
-    : 'http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943'; // Local
+    : `http://${import.meta.env.VITE_CANISTER_ID_INTERNET_IDENTITY}.localhost:4943`; // Local
     
   console.log('🌐 Network detection:', {
     hostname: window.location.hostname,
