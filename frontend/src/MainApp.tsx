@@ -27,6 +27,7 @@ export default function MainApp() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userCampaigns, setUserCampaigns] = useState<CampaignDisplay[]>([]);
+  const [isFetchingCampaigns, setIsFetchingCampaigns] = useState(false);
   
   // Стан для авторизації
   const [authState, setAuthState] = useState({
@@ -68,7 +69,6 @@ export default function MainApp() {
   // Автоматично завантажуємо кампанії коли actor стає доступним і користувач на dashboard
   useEffect(() => {
     if (authState.actor && step === "dashboard") {
-      console.log('🔄 Actor ready and user on dashboard, fetching campaigns...');
       // Використовуємо setTimeout щоб уникнути повторних викликів
       const timeoutId = setTimeout(() => {
         fetchUserCampaigns();
@@ -132,14 +132,9 @@ export default function MainApp() {
                         console.log('👤 User exists, going to dashboard');
                         // Користувач вже існує, переходимо до dashboard
                         setStep("dashboard");
-                        // Завжди отримуємо актуальні кампанії після того, як actor буде готовий
+                        // Використовуємо поточний actor замість authState.actor
                         setTimeout(() => {
-                          if (authState.actor) {
-                            fetchUserCampaigns();
-                          } else {
-                            console.log('⚠️ Actor not ready yet, will retry...');
-                            setTimeout(() => fetchUserCampaigns(), 500);
-                          }
+                          fetchUserCampaigns();
                         }, 100);
                       } else {
                       console.log('🆕 User does not exist, showing registration form');
@@ -198,35 +193,30 @@ export default function MainApp() {
   };
 
   // --- КАМПАНІЇ КОРИСТУВАЧА ---
-  const [isFetchingCampaigns, setIsFetchingCampaigns] = useState(false);
   
   const fetchUserCampaigns = async () => {
-    if (!authState.actor || isFetchingCampaigns) {
-      console.log('⚠️ Skipping fetchUserCampaigns - actor not ready or already fetching');
+    const currentActor = authState.actor;
+    if (!currentActor || isFetchingCampaigns) {
       return;
     }
     
     setIsFetchingCampaigns(true);
-    console.log('🚀 Starting fetchUserCampaigns...');
     
     const fetchWithRetry = async (retries = 3) => {
       for (let i = 0; i < retries; i++) {
         try {
-          console.log(`📋 Fetching user campaigns (attempt ${i + 1}/${retries})...`);
-          const principal = await authState.actor.whoami();
-          const res = await authState.actor.getUserCampaigns(principal.toString()) as Campaign[];
+          const principal = await currentActor.whoami();
+          const res = await currentActor.getUserCampaigns(principal.toString()) as Campaign[];
           // Конвертуємо BigInt в string для JSON
           const campaignsForDisplay = res.map(campaign => ({
             ...campaign,
             createdAt: campaign.createdAt.toString()
           }));
-          console.log("User campaigns:", campaignsForDisplay);
           setUserCampaigns(campaignsForDisplay);
           return;
         } catch (err) {
-          console.error(`❌ Error fetching campaigns (attempt ${i + 1}/${retries}):`, err);
+          console.error(`Error fetching campaigns (attempt ${i + 1}/${retries}):`, err);
           if (i === retries - 1) {
-            console.log('🔄 All retries failed, setting empty campaigns');
             setUserCampaigns([]);
           } else {
             // Чекаємо перед повторною спробою
@@ -258,14 +248,9 @@ export default function MainApp() {
       if (res) {
         console.log('✅ Registration successful, going to dashboard');
         setStep("dashboard");
-        // Завжди отримуємо актуальні кампанії після того, як actor буде готовий
+        // Використовуємо поточний actor замість authState.actor
         setTimeout(() => {
-          if (authState.actor) {
-            fetchUserCampaigns();
-          } else {
-            console.log('⚠️ Actor not ready yet, will retry...');
-            setTimeout(() => fetchUserCampaigns(), 500);
-          }
+          fetchUserCampaigns();
         }, 100);
       } else {
         console.log('❌ Registration failed - user already exists');
