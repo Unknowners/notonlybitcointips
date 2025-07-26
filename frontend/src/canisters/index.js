@@ -9,7 +9,7 @@ const isMainnet = window.location.hostname.includes('ic0.app') ||
 
 export const canisterId = isMainnet 
   ? "g7k3j-maaaa-aaaah-arinq-cai" // Production canister ID
-  : (import.meta.env.VITE_CANISTER_ID_USER_CANISTER || "g7k3j-maaaa-aaaah-arinq-cai"); // Local canister ID
+  : (import.meta.env.VITE_CANISTER_ID_USER_CANISTER || "uzt4z-lp777-77774-qaabq-cai"); // Local canister ID
 
 // Determine canister host from environment variables for flexibility between
 // local and production deployments.
