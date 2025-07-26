@@ -12,7 +12,7 @@
       },
       "source": ["frontend/dist"],
       "type": "assets",
-      "build": "cd frontend && npm ci && npm run build"
+      "build": "cd frontend && npm install --frozen-lockfile && npm run build"
     },
     "internet_identity": {
       "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
