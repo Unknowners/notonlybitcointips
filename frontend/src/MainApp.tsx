@@ -81,7 +81,7 @@ export default function MainApp() {
       
       return () => clearTimeout(timeoutId);
     }
-  }, [authState.actor, step]);
+  }, [authState.actor, step, campaignId]);
 
   const updateActor = async () => {
     try {
@@ -282,9 +282,14 @@ export default function MainApp() {
       );
       console.log("Campaign created, id:", res);
       setCampaignId(res);
+      // Очищаємо форму після успішного створення
+      setCampaign({ name: "", description: "", tokens: [] });
       setStep("dashboard");
       console.log("step:", "dashboard");
-      // fetchUserCampaigns буде викликано автоматично через useEffect
+      // Примусово оновлюємо список кампаній після створення
+      setTimeout(() => {
+        fetchUserCampaigns();
+      }, 100);
     } catch (err) {
       setError("Error creating campaign.");
       console.error("Error creating campaign:", err);
