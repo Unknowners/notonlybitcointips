@@ -1,130 +1,145 @@
 import Principal "mo:base/Principal";
-import Time "mo:base/Time";
-import Array "mo:base/Array";
 import Text "mo:base/Text";
-import Nat "mo:base/Nat";
+import Nat64 "mo:base/Nat64";
+import Time "mo:base/Time";
+import HashMap "mo:base/HashMap";
+import Array "mo:base/Array";
+import Iter "mo:base/Iter";
+import Option "mo:base/Option";
+import Debug "mo:base/Debug";
+import Error "mo:base/Error";
 import Int "mo:base/Int";
 
-actor {
-  // --- Типи ---
-  type UserId = Principal;
-  type CampaignId = Text; // короткий id/токен для посилання
+shared({ caller = initializer }) actor class UserCanister() = {
 
-  type User = {
-    id: UserId;
-    name: Text;
-    email: ?Text;
-    createdAt: Time.Time;
-  };
-
-  type Campaign = {
-    id: CampaignId;
-    name: Text;
-    description: Text;
-    owner: UserId;
-    acceptedTokens: [Text];
-    createdAt: Time.Time;
-  };
-
-  // --- Сховище ---
-  stable var users : [User] = [];
-  stable var campaigns : [Campaign] = [];
-
-  // --- Допоміжна функція для підрядка ---
-  func textPrefix(t : Text, n : Nat) : Text {
-    var result = "";
-    var count = 0;
-    label l for (c in t.chars()) {
-      if (count >= n) break l;
-      result #= Text.fromChar(c);
-      count += 1;
+    // Types
+    type UserId = Principal;
+    type CampaignId = Text;
+    
+    type User = {
+        id: UserId;
+        name: Text;
+        email: ?Text;
+        createdAt: Nat64;
     };
-    result
-  };
-
-  // --- Методи --- 
-
-  // Функція для тестування авторизації Internet Identity
-  public shared query (message) func whoami() : async Principal {
-    message.caller;
-  };
-
-  // Перевірити чи існує користувач
-  public shared query (message) func userExists() : async Bool {
-    let exists = Array.find<User>(users, func u = u.id == message.caller) != null;
-    exists;
-  };
-
-  // Створити користувача
-  public shared({caller}) func createUser(name: Text, email: ?Text) : async Bool {
-    // Якщо користувач вже існує — не додаємо
-    let exists = Array.find<User>(users, func u = u.id == caller) != null;
-    if (exists) return false;
-    let user : User = {
-      id = caller;
-      name = name;
-      email = email;
-      createdAt = Time.now();
+    
+    type Campaign = {
+        id: CampaignId;
+        name: Text;
+        description: Text;
+        owner: UserId;
+        acceptedTokens: [Text];
+        createdAt: Nat64;
     };
-    users := Array.append(users, [user]);
-    return true;
-  };
 
-  // Створити кампанію
-  public shared({caller}) func createCampaign(name: Text, description: Text, acceptedTokens: [Text]) : async Text {
-    // Генеруємо короткий id (наприклад, на основі часу та частини principal)
-    let principalText = Principal.toText(caller);
-    let prefix = textPrefix(principalText, 5);
-    let shortId = Int.toText(Time.now() / 1_000_000) # "-" # prefix;
-    let campaign : Campaign = {
-      id = shortId;
-      name = name;
-      description = description;
-      owner = caller;
-      acceptedTokens = acceptedTokens;
-      createdAt = Time.now();
+    // Storage
+    private stable var users: [(UserId, User)] = [];
+    private stable var campaigns: [(CampaignId, Campaign)] = [];
+    
+    private var usersMap = HashMap.HashMap<UserId, User>(0, Principal.equal, Principal.hash);
+    private var campaignsMap = HashMap.HashMap<CampaignId, Campaign>(0, Text.equal, Text.hash);
+
+    // System functions
+    system func preupgrade() {
+        users := Iter.toArray(usersMap.entries());
+        campaigns := Iter.toArray(campaignsMap.entries());
     };
-    campaigns := Array.append(campaigns, [campaign]);
-    return shortId;
-  };
 
-  // Отримати кампанію за id
-  public query func getCampaign(id: CampaignId) : async ?Campaign {
-    for (c in campaigns.vals()) {
-      if (c.id == id) return ?c;
+    system func postupgrade() {
+        usersMap := HashMap.fromIter<UserId, User>(users.vals(), 0, Principal.equal, Principal.hash);
+        campaigns := [];
+        campaignsMap := HashMap.fromIter<CampaignId, Campaign>(campaigns.vals(), 0, Text.equal, Text.hash);
+        campaigns := [];
     };
-    return null;
-  };
 
-  // (Опціонально) Отримати всі кампанії користувача
-  public query func getUserCampaigns(userIdText: Text) : async [Campaign] {
-    let userId = Principal.fromText(userIdText);
-    Array.filter<Campaign>(campaigns, func c = c.owner == userId)
-  };
+    // Authentication
+    public shared({ caller }) func whoami() : async Principal {
+        return caller;
+    };
 
-  // (DEBUG) Отримати всі кампанії для діагностики
-  public query func getAllCampaigns() : async [Campaign] {
-    campaigns
-  };
+    // User management
+    public shared({ caller }) func createUser(name: Text, email: ?Text) : async Bool {
+        if (Text.size(name) == 0) {
+            return false;
+        };
+        
+        let user: User = {
+            id = caller;
+            name = name;
+            email = email;
+            createdAt = Nat64.fromNat(Int.abs(Time.now()));
+        };
+        
+        usersMap.put(caller, user);
+        return true;
+    };
 
-  // (DEBUG) Отримати всіх користувачів
-  public query func getAllUsers() : async [User] {
-    users
-  };
+    public query func userExists() : async Bool {
+        switch (usersMap.get(initializer)) {
+            case (?user) { return true; };
+            case null { return false; };
+        };
+    };
 
-  // (DEBUG) Очистити всіх користувачів (тільки для тесту)
-  public func clearUsers() : async () {
-    users := [];
-  };
+    public query func getAllUsers() : async [User] {
+        Iter.toArray(usersMap.vals())
+    };
 
-  public query func debugCompare(userId: Principal) : async [(Text, Principal, Bool)] {
-    Array.map<Campaign, (Text, Principal, Bool)>(
-      campaigns,
-      func c = (c.id, c.owner, c.owner == userId)
-    )
-  };
+    public shared({ caller }) func clearUsers() : async () {
+        usersMap := HashMap.HashMap<UserId, User>(0, Principal.equal, Principal.hash);
+    };
 
-  public query func debugPrincipal(userId: Principal) : async Text {
-    Principal.toText(userId)
-  };
-} 
+    // Campaign management
+    public shared({ caller }) func createCampaign(name: Text, description: Text, acceptedTokens: [Text]) : async Text {
+        if (Text.size(name) == 0 or Text.size(description) == 0) {
+            return "";
+        };
+        
+        let campaignId = Nat64.toText(Nat64.fromNat(Int.abs(Time.now())));
+        
+        let campaign: Campaign = {
+            id = campaignId;
+            name = name;
+            description = description;
+            owner = caller;
+            acceptedTokens = acceptedTokens;
+            createdAt = Nat64.fromNat(Int.abs(Time.now()));
+        };
+        
+        campaignsMap.put(campaignId, campaign);
+        return campaignId;
+    };
+
+    // Get campaign by id
+    public query func getCampaign(id: Text) : async ?Campaign {
+        campaignsMap.get(id)
+    };
+
+    // (Optional) Get all campaigns for a user
+    public query func getUserCampaigns(userId: UserId) : async [Campaign] {
+        let userCampaigns = Array.filter<Campaign>(
+            Iter.toArray(campaignsMap.vals()),
+            func (campaign: Campaign) : Bool {
+                Principal.equal(campaign.owner, userId)
+            }
+        );
+        return userCampaigns;
+    };
+
+    // (DEBUG) Get all campaigns for diagnostics
+    public query func getAllCampaigns() : async [Campaign] {
+        Iter.toArray(campaignsMap.vals())
+    };
+
+    // Debug functions
+    public query func debugCompare(userId: UserId) : async [(Text, Principal, Bool)] {
+        let userPrincipal = userId;
+        let initializerPrincipal = initializer;
+        let isEqual = Principal.equal(userPrincipal, initializerPrincipal);
+        return [("User Principal", userPrincipal, isEqual)];
+    };
+
+    public query func debugPrincipal(userId: UserId) : async Text {
+        Principal.toText(userId)
+    };
+}; 

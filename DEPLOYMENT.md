@@ -1,172 +1,232 @@
-# 🚀 Розгортання в Mainnet
+# Deployment Guide
 
-## Підготовка до розгортання
+This guide covers deploying the Not Only Bitcoin Tips application to the Internet Computer mainnet.
 
-### 1. Встановлення DFX (якщо ще не встановлено)
+## Prerequisites
+
+### 1. DFX Installation
+Ensure you have DFX installed and updated:
 ```bash
 sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+dfx --version
 ```
 
-### 2. Створення акаунту в Internet Computer
+### 2. Internet Computer Account Setup
+- Create Internet Identity: https://identity.ic0.app/
+- Add ICP to your account: https://nns.ic0.app/
+- Set up dfx identity: `dfx identity new mainnet-identity`
 
-#### Крок 1: Відкрийте NNS (Network Nervous System)
-- Перейдіть на: https://nns.ic0.app/
-- Натисніть "Get ICP" або "Create Account"
+## Local Development Setup
 
-#### Крок 2: Створення Internet Identity
-- Перейдіть на: https://identity.ic0.app/
-- Натисніть "Create Internet Identity"
-- Виберіть метод аутентифікації (рекомендується браузер або пристрій)
-- Запишіть ваш **Anchor ID** (це ваш унікальний ідентифікатор)
-
-#### Крок 3: Отримання ICP токенів
-- **Безкоштовно**: https://faucet.dfinity.org/ (для тестування)
-- **Купівля**: Binance, Coinbase, або інші біржі
-- **Мінімум для розгортання**: 1-2 ICP
-
-### 3. Налаштування DFX для mainnet
-
+### Step 1: Start Local Environment
 ```bash
-# Ініціалізація identity для mainnet
+# Start local replica
+dfx start --clean --background
+
+# Deploy canisters
+dfx deploy
+```
+
+### Step 2: Internet Identity Setup
+1. Open local Internet Identity: http://127.0.0.1:4943/?canisterId=umunu-kh777-77774-qaaca-cai&id=u6s2n-gx777-77774-qaaba-cai
+2. Create a new identity for testing
+3. Note your Principal ID
+
+### Step 3: Environment Configuration
+```bash
+# Create frontend environment file
+cd frontend
+echo "VITE_CANISTER_ID_USER_CANISTER=$(dfx canister id user_canister)" > .env
+echo "VITE_CANISTER_ID_INTERNET_IDENTITY=$(dfx canister id internet_identity)" >> .env
+echo "VITE_CANISTER_HOST=http://127.0.0.1:4943" >> .env
+echo "DFX_NETWORK=local" >> .env
+echo "VITE_DFX_NETWORK=local" >> .env
+```
+
+## Mainnet Deployment
+
+### Automated Deployment
+Use the provided script for automatic deployment:
+```bash
+./scripts/deploy-to-mainnet.sh
+```
+
+### Manual Deployment Steps
+
+#### Step 1: Prepare Identity
+```bash
+# Create mainnet identity
 dfx identity new mainnet-identity
 
-# Встановлення як активна identity
+# Use mainnet identity
 dfx identity use mainnet-identity
 
-# Перевірка балансу
-dfx ledger --network ic balance
-
-# Якщо баланс порожній, поповніть через NNS
-```
-
-### 4. Поповнення балансу
-
-#### Через NNS (рекомендується):
-1. Відкрийте https://nns.ic0.app/
-2. Увійдіть через Internet Identity
-3. Перейдіть в "Accounts"
-4. Натисніть "Send" на вашому акаунті
-5. Введіть адресу вашого mainnet identity:
-   ```bash
-   dfx identity --network ic get-principal
-   ```
-6. Відправте мінімум 1-2 ICP
-
-#### Через командний рядок:
-```bash
-# Отримання адреси для поповнення
-dfx identity --network ic get-principal
-
-# Перевірка балансу після поповнення
+# Check balance
 dfx ledger --network ic balance
 ```
 
-## Розгортання проекту
-
-### 1. Підготовка проекту
+#### Step 2: Deploy Canisters
 ```bash
-# Збірка frontend
-cd frontend
-npm run build
-cd ..
-
-# Перевірка конфігурації
+# Create canisters on mainnet
 dfx canister --network ic create --all
-```
 
-### 2. Розгортання в mainnet
-```bash
-# Розгортання всіх canisters
-dfx deploy --network ic
-
-# Або розгортання по одному
+# Deploy backend
 dfx deploy --network ic user_canister
+
+# Update canister IDs
+node scripts/update-canister-ids.js
+```
+
+#### Step 3: Deploy Frontend
+```bash
+# Build frontend
+cd frontend && npm run build && cd ..
+
+# Deploy frontend
 dfx deploy --network ic frontend
 ```
 
-### 3. Перевірка розгортання
+#### Step 4: Verify Deployment
 ```bash
-# Отримання canister IDs
-dfx canister --network ic id user_canister
-dfx canister --network ic id frontend
-
-# Перевірка статусу
-dfx canister --network ic status user_canister
+# Check canister status
 dfx canister --network ic status frontend
+dfx canister --network ic status user_canister
 ```
 
-## Налаштування frontend для production
+## Configuration Files
 
-### 1. Оновлення canister ID
-Після розгортання оновіть `frontend/src/canisters/index.js`:
-```javascript
-export const canisterId = "YOUR_ACTUAL_CANISTER_ID"; // Замініть на реальний ID
+### dfx.json
+```json
+{
+  "canisters": {
+    "user_canister": {
+      "main": "backend/user_canister.mo",
+      "type": "motoko"
+    },
+    "frontend": {
+      "dependencies": ["user_canister"],
+      "frontend": {
+        "entrypoint": "frontend/index.html"
+      },
+      "source": ["frontend/dist"],
+      "type": "assets"
+    },
+    "internet_identity": {
+      "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
+      "type": "custom",
+      "remote": {
+        "id": {
+          "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+        }
+      },
+      "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz"
+    }
+  }
+}
 ```
 
-### 2. Оновлення environment variables
-Створіть `.env.production`:
-```env
-DFX_NETWORK=ic
-VITE_CANISTER_HOST=https://ic0.app
+### canister_ids.json
+```json
+{
+  "frontend": {
+    "ic": "your-frontend-canister-id",
+    "local": "local-frontend-canister-id"
+  },
+  "user_canister": {
+    "ic": "your-user-canister-id",
+    "local": "local-user-canister-id"
+  },
+  "internet_identity": {
+    "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai",
+    "local": "local-internet-identity-canister-id"
+  }
+}
 ```
 
-### 3. Перебілд та redeploy
-```bash
-cd frontend
-npm run build
-cd ..
-dfx deploy --network ic frontend
-```
+## Testing Deployment
 
-## Перевірка роботи
+### 1. Authentication Test
+1. Open your deployed frontend URL
+2. Click "Sign in with Internet Identity"
+3. Create a new identity or sign in to existing one
 
-### 1. Відкрийте додаток
-URL буде показаний після розгортання, зазвичай:
-```
-https://YOUR_FRONTEND_CANISTER_ID.ic0.app/
-```
+### 2. User Registration Test
+1. Fill out the registration form
+2. Verify user creation
 
-### 2. Тестування
-- Увійдіть через Internet Identity
-- Створіть тестову кампанію
-- Перевірте всі функції
-
-## Корисні команди
-
-```bash
-# Перегляд логів
-dfx canister --network ic call user_canister getAllUsers
-
-# Очищення (тільки для тестування)
-dfx canister --network ic call user_canister clearUsers
-
-# Отримання інформації про canister
-dfx canister --network ic info user_canister
-```
+### 3. Campaign Creation Test
+1. Create a test campaign
+2. Verify QR code generation
+3. Test campaign link sharing
 
 ## Troubleshooting
 
-### Помилка "Insufficient cycles"
+### Insufficient Cycles Error
 ```bash
-# Поповнення cycles
-dfx canister --network ic deposit-cycles user_canister 1000000000000
+# Check canister cycles
+dfx canister --network ic status frontend
+
+# Add cycles if needed
+dfx canister --network ic deposit-cycles 1000000000000 frontend
 ```
 
-### Помилка авторизації
-- Перевірте, чи використовується правильний Internet Identity URL
-- Переконайтеся, що ви увійшли через https://identity.ic0.app/
+### Authentication Issues
+- Verify Internet Identity canister is deployed
+- Check frontend environment variables
+- Ensure proper network configuration
 
-### Помилка збірки
+### Build Errors
+- Check Node.js version compatibility
+- Verify all dependencies are installed
+- Check for TypeScript compilation errors
+
+## Monitoring
+
+### Canister Metrics
 ```bash
-# Очищення кешу
-dfx stop
-dfx start --clean
+# Check canister status
+dfx canister --network ic status user_canister
+
+# View canister logs
+dfx canister --network ic call user_canister getAllCampaigns
 ```
 
-## Корисні посилання
+### Performance Monitoring
+- Monitor canister cycles usage
+- Check response times
+- Monitor error rates
 
-- [Internet Computer Documentation](https://internetcomputer.org/docs)
-- [Internet Identity](https://identity.ic0.app/)
-- [NNS Dashboard](https://nns.ic0.app/)
-- [Cycles Faucet](https://faucet.dfinity.org/)
-- [IC Explorer](https://dashboard.internetcomputer.org/) 
+## Security Considerations
+
+### Environment Variables
+- Never commit sensitive data to version control
+- Use environment-specific configuration
+- Validate all user inputs
+
+### Canister Permissions
+- Review canister access controls
+- Implement proper authentication checks
+- Validate user permissions
+
+## Maintenance
+
+### Regular Updates
+```bash
+# Update DFX
+sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+
+# Update dependencies
+npm update
+```
+
+### Backup Strategy
+- Regular canister state backups
+- Configuration file backups
+- User data export capabilities
+
+## Support
+
+For deployment issues:
+- Check [Internet Computer documentation](https://internetcomputer.org/docs/current/developer-docs/)
+- Review [DFX documentation](https://internetcomputer.org/docs/current/developer-docs/setup/install/)
+- Open issues in the project repository 

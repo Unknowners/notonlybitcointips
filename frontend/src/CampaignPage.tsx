@@ -16,8 +16,8 @@ export default function CampaignPage() {
     }
   }, [id]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-xl">Завантаження...</div>;
-  if (!campaign) return <div className="min-h-screen flex items-center justify-center text-xl text-red-500">Кампанію не знайдено</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-xl">Loading...</div>;
+  if (!campaign) return <div className="min-h-screen flex items-center justify-center text-xl text-red-500">Campaign not found</div>;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-gray-900 flex flex-col items-center justify-center p-4">
@@ -25,7 +25,7 @@ export default function CampaignPage() {
         <h1 className="text-3xl font-extrabold text-gray-900 mb-2">{campaign.name}</h1>
         <p className="text-gray-700 mb-4">{campaign.description}</p>
         <div className="mb-4">
-          <span className="font-semibold text-gray-800">Валюти для донатів:</span>
+          <span className="font-semibold text-gray-800">Currencies for donations:</span>
           <div className="flex gap-2 mt-2">
             {campaign.acceptedTokens.map((token: string) => (
               <span key={token} className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">{token}</span>
