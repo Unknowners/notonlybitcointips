@@ -5,9 +5,6 @@ import Time "mo:base/Time";
 import HashMap "mo:base/HashMap";
 import Array "mo:base/Array";
 import Iter "mo:base/Iter";
-import Option "mo:base/Option";
-import Debug "mo:base/Debug";
-import Error "mo:base/Error";
 import Blob "mo:base/Blob";
 import Int "mo:base/Int";
 
@@ -83,7 +80,7 @@ shared({ caller = initializer }) actor class UserCanister() = {
 
     public query func userExists() : async Bool {
         switch (usersMap.get(initializer)) {
-            case (?user) { return true; };
+            case (?_) { return true; };
             case null { return false; };
         };
     };
@@ -92,7 +89,7 @@ shared({ caller = initializer }) actor class UserCanister() = {
         Iter.toArray(usersMap.vals())
     };
 
-    public shared({ caller }) func clearUsers() : async () {
+    public shared func clearUsers() : async () {
         usersMap := HashMap.HashMap<UserId, User>(0, Principal.equal, Principal.hash);
     };
 

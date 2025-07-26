@@ -314,7 +314,7 @@ export default function MainApp() {
       setTimeout(() => {
         fetchUserCampaigns();
       }, 100);
-    } catch (err) {
+    } catch (err: any) {
       console.error('❌ Detailed error creating campaign:', {
         error: err,
         message: err?.message || 'Unknown error',
