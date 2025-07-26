@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { user_canister } from "./canisters";
+import { user_canister } from "./canisters/index.js";
 
 export default function CampaignPage() {
   const { id } = useParams();

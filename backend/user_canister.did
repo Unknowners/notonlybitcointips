@@ -21,5 +21,8 @@ service : {
   createUser: (name: text, email: opt text) -> (bool);
   createCampaign: (name: text, description: text, acceptedTokens: vec text) -> (text);
   getCampaign: (id: text) -> (opt Campaign) query;
-  getUserCampaigns: (userId: UserId) -> (vec Campaign) query;
+  getUserCampaigns: (userId: text) -> (vec Campaign) query;
+  whoami: () -> (principal) query;
+  userExists: () -> (bool) query;
+  clearUsers: () -> ();
 } 

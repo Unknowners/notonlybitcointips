@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { user_canister } from "./canisters";
+import { AuthClient } from '@dfinity/auth-client';
+import { createActor } from "./canisters/index.js";
 
 // Типи для кампаній
 type Campaign = {
@@ -19,46 +20,238 @@ type CampaignDisplay = Omit<Campaign, 'createdAt'> & {
 const TOKENS = ["ICP", "BTC", "ETH", "USDT"];
 
 export default function MainApp() {
-  const [step, setStep] = useState<"register" | "dashboard" | "qr">("register");
+  const [step, setStep] = useState<"auth" | "register" | "dashboard" | "qr">("auth");
   const [user, setUser] = useState<{ name: string; email: string }>({ name: "", email: "" });
   const [campaign, setCampaign] = useState({ name: "", description: "", tokens: [] as string[] });
   const [campaignId, setCampaignId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userCampaigns, setUserCampaigns] = useState<CampaignDisplay[]>([]);
+  
+  // Стан для авторизації
+  const [authState, setAuthState] = useState({
+    actor: undefined as any,
+    authClient: undefined as AuthClient | undefined,
+    isAuthenticated: false,
+    principal: 'Натисніть "Whoami" щоб побачити ваш Principal ID'
+  });
+
+  // Налаштування мережі
+  const network = import.meta.env.DFX_NETWORK || 'local';
+  const identityProvider =
+    network === 'ic'
+      ? 'https://identity.ic0.app' // Mainnet
+      : 'http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943'; // Local
+
+  // Ініціалізація авторизації
+  useEffect(() => {
+    console.log('🚀 MainApp: Component mounted, calling updateActor...');
+    updateActor();
+  }, []);
+
+  // Автоматично завантажуємо кампанії коли actor стає доступним і користувач на dashboard
+  useEffect(() => {
+    if (authState.actor && step === "dashboard") {
+      console.log('🔄 Actor ready and user on dashboard, fetching campaigns...');
+      // Використовуємо setTimeout щоб уникнути повторних викликів
+      const timeoutId = setTimeout(() => {
+        fetchUserCampaigns();
+      }, 100);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [authState.actor, step]);
+
+  const updateActor = async () => {
+    try {
+      console.log('🔄 updateActor: Starting...');
+      const authClient = await AuthClient.create();
+      const identity = authClient.getIdentity();
+      const actor = createActor(identity);
+      const isAuthenticated = await authClient.isAuthenticated();
+
+      console.log('🔐 Auth status:', { isAuthenticated });
+
+      setAuthState((prev) => ({
+        ...prev,
+        actor,
+        authClient,
+        isAuthenticated
+      }));
+
+                        // Якщо користувач авторизований, перевіряємо чи він вже існує
+                  if (isAuthenticated) {
+                    console.log('✅ User is authenticated, checking if user exists...');
+                    
+                    // Функція для перевірки існування користувача з повторними спробами
+                    const checkUserExistsWithRetry = async (retries = 3) => {
+                      for (let i = 0; i < retries; i++) {
+                        try {
+                          console.log(`🔍 Calling userExists() (attempt ${i + 1}/${retries})...`);
+                          const userExists = await actor.userExists();
+                          console.log('📊 userExists result:', userExists);
+                          return userExists;
+                        } catch (error) {
+                          console.error(`❌ Error checking user existence (attempt ${i + 1}/${retries}):`, error);
+                          if (i === retries - 1) {
+                            // Остання спроба невдала, показуємо форму реєстрації
+                            console.log('🔄 All retries failed, showing registration form');
+                            return false;
+                          }
+                          // Чекаємо перед повторною спробою
+                          await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+                        }
+                      }
+                      return false;
+                    };
+
+                    const userExists = await checkUserExistsWithRetry();
+                    
+                                          if (userExists) {
+                        console.log('👤 User exists, going to dashboard');
+                        // Користувач вже існує, переходимо до dashboard
+                        setStep("dashboard");
+                        // Завжди отримуємо актуальні кампанії після того, як actor буде готовий
+                        setTimeout(() => {
+                          if (authState.actor) {
+                            fetchUserCampaigns();
+                          } else {
+                            console.log('⚠️ Actor not ready yet, will retry...');
+                            setTimeout(() => fetchUserCampaigns(), 500);
+                          }
+                        }, 100);
+                      } else {
+                      console.log('🆕 User does not exist, showing registration form');
+                      // Користувач не існує, показуємо форму реєстрації
+                      setStep("register");
+                    }
+                  } else {
+                    console.log('❌ User is not authenticated');
+                  }
+    } catch (error) {
+      console.error('❌ Error updating actor:', error);
+    }
+  };
+
+  const login = async () => {
+    if (!authState.authClient) return;
+    
+    await authState.authClient.login({
+      identityProvider,
+      onSuccess: updateActor
+    });
+  };
+
+  const logout = async () => {
+    if (!authState.authClient) return;
+    
+    await authState.authClient.logout();
+    updateActor();
+    setStep("auth");
+  };
+
+  const whoami = async () => {
+    if (!authState.actor) return;
+
+    console.log('🔍 Calling whoami...');
+    setAuthState((prev) => ({
+      ...prev,
+      principal: 'Завантаження...'
+    }));
+
+    try {
+      const result = await authState.actor.whoami();
+      const principal = result.toString();
+      console.log('👤 Whoami result:', principal);
+      setAuthState((prev) => ({
+        ...prev,
+        principal
+      }));
+    } catch (error) {
+      console.error('❌ Error calling whoami:', error);
+      setAuthState((prev) => ({
+        ...prev,
+        principal: 'Помилка отримання Principal ID'
+      }));
+    }
+  };
 
   // --- КАМПАНІЇ КОРИСТУВАЧА ---
+  const [isFetchingCampaigns, setIsFetchingCampaigns] = useState(false);
+  
   const fetchUserCampaigns = async () => {
+    if (!authState.actor || isFetchingCampaigns) {
+      console.log('⚠️ Skipping fetchUserCampaigns - actor not ready or already fetching');
+      return;
+    }
+    
+    setIsFetchingCampaigns(true);
+    console.log('🚀 Starting fetchUserCampaigns...');
+    
+    const fetchWithRetry = async (retries = 3) => {
+      for (let i = 0; i < retries; i++) {
+        try {
+          console.log(`📋 Fetching user campaigns (attempt ${i + 1}/${retries})...`);
+          const principal = await authState.actor.whoami();
+          const res = await authState.actor.getUserCampaigns(principal.toString()) as Campaign[];
+          // Конвертуємо BigInt в string для JSON
+          const campaignsForDisplay = res.map(campaign => ({
+            ...campaign,
+            createdAt: campaign.createdAt.toString()
+          }));
+          console.log("User campaigns:", campaignsForDisplay);
+          setUserCampaigns(campaignsForDisplay);
+          return;
+        } catch (err) {
+          console.error(`❌ Error fetching campaigns (attempt ${i + 1}/${retries}):`, err);
+          if (i === retries - 1) {
+            console.log('🔄 All retries failed, setting empty campaigns');
+            setUserCampaigns([]);
+          } else {
+            // Чекаємо перед повторною спробою
+            await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+          }
+        }
+      }
+    };
+    
     try {
-      console.log("Fetching all campaigns...");
-      const res = await user_canister.getAllCampaigns() as Campaign[];
-      // Конвертуємо BigInt в string для JSON
-      const campaignsForDisplay = res.map(campaign => ({
-        ...campaign,
-        createdAt: campaign.createdAt.toString()
-      }));
-      console.log("All campaigns:", campaignsForDisplay);
-      setUserCampaigns(campaignsForDisplay);
-    } catch (err) {
-      console.error("Error fetching campaigns:", err);
-      setUserCampaigns([]);
+      await fetchWithRetry();
+    } finally {
+      setIsFetchingCampaigns(false);
     }
   };
 
   // --- ХЕНДЛЕРИ ---
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('📝 handleRegister: Starting registration...');
+    console.log('👤 User data:', user);
+    console.log('🔐 Using authenticated actor:', !!authState.actor);
     setLoading(true);
     setError(null);
     try {
-      const res = await user_canister.createUser(user.name, user.email ? [user.email] : []);
+      console.log('🔧 Calling createUser with authenticated actor...');
+      const res = await authState.actor.createUser(user.name, user.email ? [user.email] : []);
+      console.log('📊 createUser result:', res);
       if (res) {
+        console.log('✅ Registration successful, going to dashboard');
         setStep("dashboard");
-        fetchUserCampaigns();
+        // Завжди отримуємо актуальні кампанії після того, як actor буде готовий
+        setTimeout(() => {
+          if (authState.actor) {
+            fetchUserCampaigns();
+          } else {
+            console.log('⚠️ Actor not ready yet, will retry...');
+            setTimeout(() => fetchUserCampaigns(), 500);
+          }
+        }, 100);
       } else {
+        console.log('❌ Registration failed - user already exists');
         setError("Користувач вже існує або помилка реєстрації.");
       }
-    } catch {
+    } catch (error) {
+      console.error('❌ Error during registration:', error);
       setError("Помилка підключення до canister.");
     }
     setLoading(false);
@@ -69,7 +262,7 @@ export default function MainApp() {
     setLoading(true);
     setError(null);
     try {
-      const res = await user_canister.createCampaign(
+      const res = await authState.actor.createCampaign(
         campaign.name,
         campaign.description,
         campaign.tokens
@@ -98,20 +291,68 @@ export default function MainApp() {
             </svg>
           </div>
           <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-1 drop-shadow-lg">
-            {step === "register" && "Вітаємо у Donation Hub"}
+            {step === "auth" && "Вітаємо у Donation Hub"}
+            {step === "register" && "Завершіть реєстрацію"}
             {step === "dashboard" && "Створіть свою кампанію"}
           </h1>
           <p className="text-gray-500 text-center text-lg font-medium">
-            {step === "register" && "Зареєструйтесь, щоб створювати збори та отримувати донати"}
+            {step === "auth" && "Увійдіть через Internet Identity для створення зборів"}
+            {step === "register" && "Заповніть додаткову інформацію"}
             {step === "dashboard" && "Заповніть форму для старту збору"}
           </p>
         </div>
+
+        {/* Екран авторизації */}
+        {step === "auth" && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <p className="text-gray-600 mb-4">
+                Для використання додатку потрібно увійти через Internet Identity
+              </p>
+              <button
+                onClick={login}
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-500 text-white py-3 rounded-xl font-bold text-lg shadow-lg hover:scale-105 active:scale-95 transition-all duration-200"
+              >
+                Увійти через Internet Identity
+              </button>
+            </div>
+            
+            <div className="bg-blue-50 rounded-lg p-4">
+              <h3 className="font-semibold text-blue-900 mb-2">Що таке Internet Identity?</h3>
+              <p className="text-blue-800 text-sm">
+                Internet Identity - це система авторизації від DFINITY, яка дозволяє безпечно увійти в dApp без паролів, 
+                використовуючи ваш пристрій або браузер як ключ.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Інформація про Principal ID */}
+        {authState.isAuthenticated && (
+          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+            <h3 className="font-semibold text-gray-900 mb-2">Ваш Principal ID:</h3>
+            <p className="text-sm text-gray-600 font-mono break-all mb-2">{authState.principal}</p>
+            <div className="flex gap-2">
+              <button
+                onClick={whoami}
+                className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition"
+              >
+                Оновити
+              </button>
+              <button
+                onClick={logout}
+                className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition"
+              >
+                Вийти
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Список кампаній користувача */}
         {step === "dashboard" && (
           <div className="mb-8">
             <h2 className="text-lg font-bold mb-2 text-gray-800">Ваші кампанії</h2>
-            <pre>{JSON.stringify(userCampaigns, null, 2)}</pre>
             <ul className="space-y-2">
               {userCampaigns.map((c, i) => (
                 <li key={i} className="bg-gray-100 rounded-lg px-4 py-2 flex justify-between items-center">
@@ -157,7 +398,7 @@ export default function MainApp() {
               className="w-full bg-gradient-to-r from-blue-600 to-indigo-500 text-white py-3 rounded-xl font-bold text-lg shadow-lg hover:scale-105 active:scale-95 transition-all duration-200"
               disabled={loading}
             >
-              {loading ? "Реєстрація..." : "Зареєструватись"}
+              {loading ? "Реєстрація..." : "Завершити реєстрацію"}
             </button>
           </form>
         )}

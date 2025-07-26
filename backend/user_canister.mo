@@ -44,6 +44,17 @@ actor {
 
   // --- Методи --- 
 
+  // Функція для тестування авторизації Internet Identity
+  public shared query (message) func whoami() : async Principal {
+    message.caller;
+  };
+
+  // Перевірити чи існує користувач
+  public shared query (message) func userExists() : async Bool {
+    let exists = Array.find<User>(users, func u = u.id == message.caller) != null;
+    exists;
+  };
+
   // Створити користувача
   public shared({caller}) func createUser(name: Text, email: ?Text) : async Bool {
     // Якщо користувач вже існує — не додаємо
@@ -86,7 +97,8 @@ actor {
   };
 
   // (Опціонально) Отримати всі кампанії користувача
-  public query func getUserCampaigns(userId: UserId) : async [Campaign] {
+  public query func getUserCampaigns(userIdText: Text) : async [Campaign] {
+    let userId = Principal.fromText(userIdText);
     Array.filter<Campaign>(campaigns, func c = c.owner == userId)
   };
 

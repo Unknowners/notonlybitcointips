@@ -2,6 +2,12 @@
   "__Candid_UI": {
     "local": "u6s2n-gx777-77774-qaaba-cai"
   },
+  "frontend": {
+    "local": "uzt4z-lp777-77774-qaabq-cai"
+  },
+  "internet_identity": {
+    "local": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+  },
   "user_canister": {
     "local": "uxrrr-q7777-77774-qaaaq-cai"
   }

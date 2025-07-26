@@ -31,8 +31,7 @@ export interface _SERVICE {
   'getAllCampaigns' : ActorMethod<[], Array<Campaign>>,
   'getAllUsers' : ActorMethod<[], Array<User>>,
   'getCampaign' : ActorMethod<[CampaignId], [] | [Campaign]>,
-  'getUserCampaigns' : ActorMethod<[string], Array<Campaign>>,
-  'userExists' : ActorMethod<[], boolean>,
+  'getUserCampaigns' : ActorMethod<[UserId], Array<Campaign>>,
   'whoami' : ActorMethod<[], Principal>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;

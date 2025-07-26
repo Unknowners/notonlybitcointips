@@ -1,52 +1,133 @@
-# Donation Hub
+# Donation Hub - ICP DApp
 
-Donation Hub is a simple example dApp built for the ICP hackathon. It demonstrates how a Motoko backend can interact with a React + TypeScript + Vite frontend. Users can register and create donation campaigns stored on chain.
+DApp для створення кампаній збору коштів на Internet Computer з підтримкою авторизації через Internet Identity.
 
-## Repository structure
+## Особливості
 
-- `frontend/` – React application built with Vite and Tailwind CSS
-- `backend/` – Motoko canister source (`user_canister.mo`)
-- `dfx.json` – project configuration for the DFINITY SDK (`dfx`)
+- 🔐 Авторизація через Internet Identity
+- 🎯 Створення кампаній збору коштів
+- 📱 QR-коди для поширення кампаній
+- 💰 Підтримка різних валют (ICP, BTC, ETH, USDT)
+- 🎨 Сучасний UI з Tailwind CSS
 
-## Requirements
+## Технології
 
-- [DFX](https://internetcomputer.org/docs/current/developer-docs/build/install-upgrade-remove) (the DFINITY SDK)
-- Node.js and npm (tested with Node 18)
+- **Backend**: Motoko (Internet Computer)
+- **Frontend**: React + TypeScript + Vite
+- **Авторизація**: Internet Identity
+- **Стилізація**: Tailwind CSS
 
-Ensure `dfx` is available in your `PATH` and that Node/npm are installed.
+## Встановлення та запуск
 
-## Starting the frontend
+### Передумови
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+1. Встановіть [DFX](https://internetcomputer.org/docs/current/developer-docs/setup/install/)
+2. Встановіть Node.js (версія 16 або вище)
 
-The command above installs dependencies and runs the Vite development server.
+### Кроки запуску
 
-## Deploying and running the Motoko canister
-
-1. Start the local Internet Computer replica:
+1. **Клонуйте репозиторій**
    ```bash
-   dfx start --background
+   git clone <repository-url>
+   cd notonlybitcointips
    ```
-2. Deploy the canister:
+
+2. **Встановіть залежності фронтенду**
+   ```bash
+   cd frontend
+   npm install
+   cd ..
+   ```
+
+3. **Запустіть локальну мережу Internet Computer**
+   ```bash
+   dfx start --clean --background
+   ```
+
+4. **Розгорніть canisters**
    ```bash
    dfx deploy
    ```
-   After deployment, note the generated `user_canister` ID from `.dfx/local/canister_ids.json` and update `frontend/src/canisters/index.js` with that ID so the frontend can talk to your canister.
 
-## Configuring the canister host
+5. **Запустіть фронтенд у режимі розробки**
+   ```bash
+   cd frontend
+   npm run dev
+   ```
 
-The frontend reads the canister host from the `VITE_CANISTER_HOST` environment
-variable. Create an `.env` file inside the `frontend/` directory and specify the
-desired host URL, for example:
+6. **Відкрийте браузер**
+   - Локальний фронтенд: http://localhost:5173
+   - Розгорнутий фронтенд: http://127.0.0.1:4943
 
-```bash
-VITE_CANISTER_HOST=http://127.0.0.1:4943
+## Використання
+
+### Авторизація
+
+1. Відкрийте додаток у браузері
+2. Натисніть "Увійти через Internet Identity"
+3. Слідуйте інструкціям для створення або входу в Internet Identity
+4. Після успішної авторизації ви побачите свій Principal ID
+
+### Створення кампанії
+
+1. Після авторизації заповніть форму реєстрації
+2. Перейдіть до створення кампанії
+3. Заповніть назву, опис та виберіть валюти для донатів
+4. Натисніть "Створити кампанію"
+5. Скопіюйте лінк або QR-код для поширення
+
+## Структура проекту
+
+```
+notonlybitcointips/
+├── backend/
+│   ├── user_canister.mo      # Motoko canister
+│   └── user_canister.did     # Candid interface
+├── frontend/
+│   ├── src/
+│   │   ├── App.tsx           # Головний компонент
+│   │   ├── MainApp.tsx       # Основний інтерфейс з авторизацією
+│   │   ├── CampaignPage.tsx  # Сторінка кампанії
+│   │   └── canisters/        # Генеровані файли для роботи з canisters
+│   ├── package.json
+│   └── vite.config.ts
+└── dfx.json                  # Конфігурація DFX
 ```
 
-If this variable is not provided, the app defaults to `http://127.0.0.1:4943`.
+## Internet Identity
 
-You can now call canister methods via `dfx` or through the frontend app.
+Проект використовує Internet Identity для авторизації користувачів. При локальній розробці використовується локальний Internet Identity canister.
+
+### Налаштування для різних мереж
+
+- **Локальна розробка**: `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`
+- **Mainnet**: `https://identity.ic0.app`
+
+## Розробка
+
+### Локальна розробка фронтенду
+
+Для швидкої розробки використовуйте локальний сервер:
+
+```bash
+cd frontend
+npm run dev
+```
+
+Це дозволить використовувати Hot Module Reloading для миттєвих змін.
+
+### Розгортання змін
+
+Після внесення змін у код:
+
+```bash
+# Для змін у backend
+dfx deploy
+
+# Для змін у frontend
+dfx deploy frontend
+```
+
+## Ліцензія
+
+MIT License

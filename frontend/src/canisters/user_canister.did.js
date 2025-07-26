@@ -24,7 +24,7 @@ export const idlFactory = ({ IDL }) => {
     ),
     'createUser': IDL.Func([IDL.Text, IDL.Opt(IDL.Text)], [IDL.Bool], []),
     'getCampaign': IDL.Func([CampaignId], [IDL.Opt(Campaign)], ['query']),
-    'getUserCampaigns': IDL.Func([UserId], [IDL.Vec(Campaign)], ['query']),
+    'getUserCampaigns': IDL.Func([IDL.Text], [IDL.Vec(Campaign)], ['query']),
     'getAllCampaigns': IDL.Func([], [IDL.Vec(Campaign)], ['query']),
     'getAllUsers': IDL.Func([], [IDL.Vec(User)], ['query']),
     'clearUsers': IDL.Func([], [], []),
@@ -34,6 +34,9 @@ export const idlFactory = ({ IDL }) => {
       ['query'],
     ),
     'debugPrincipal': IDL.Func([UserId], [IDL.Text], ['query']),
+    'whoami': IDL.Func([], [IDL.Principal], ['query']),
+    'userExists': IDL.Func([], [IDL.Bool], ['query']),
+    'clearUsers': IDL.Func([], [], []),
   });
 };
 export const init = ({ IDL }) => { return []; };

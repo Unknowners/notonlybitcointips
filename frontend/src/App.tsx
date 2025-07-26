@@ -1,4 +1,3 @@
-import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MainApp from "./MainApp";
 import CampaignPage from "./CampaignPage";
