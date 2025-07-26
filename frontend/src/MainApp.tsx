@@ -281,15 +281,30 @@ export default function MainApp() {
       return;
     }
     
+    console.log('🚀 Starting campaign creation with:', {
+      name: campaign.name,
+      description: campaign.description,
+      tokens: campaign.tokens,
+      actor: !!authState.actor,
+      isAuthenticated: authState.isAuthenticated
+    });
+    
     setLoading(true);
     setError(null);
     try {
+      console.log('📤 Calling createCampaign...');
       const res = await authState.actor.createCampaign(
         campaign.name,
         campaign.description,
         campaign.tokens
       );
-      console.log("Campaign created, id:", res);
+      console.log("✅ Campaign created successfully, id:", res);
+      
+      // Перевіряємо, чи повернувся валідний ID
+      if (!res || res === "") {
+        throw new Error("Campaign creation returned empty ID");
+      }
+      
       setCampaignId(res);
       // Очищаємо форму після успішного створення
       setCampaign({ name: "", description: "", tokens: [] });
@@ -300,8 +315,14 @@ export default function MainApp() {
         fetchUserCampaigns();
       }, 100);
     } catch (err) {
+      console.error('❌ Detailed error creating campaign:', {
+        error: err,
+        message: err?.message || 'Unknown error',
+        stack: err?.stack,
+        actor: !!authState.actor,
+        isAuthenticated: authState.isAuthenticated
+      });
       setError("Error creating campaign.");
-      console.error("Error creating campaign:", err);
     }
     setLoading(false);
   };
@@ -540,7 +561,7 @@ export default function MainApp() {
           </>
         )}
       </div>
-      <div className="mt-8 text-gray-400 text-xs text-center select-none">&copy; {new Date().getFullYear()} Donation Hub. Powered by ICP Hackathon.</div>
+      <div className="mt-8 text-gray-400 text-xs text-center select-none">&copy; {new Date().getFullYear()} Not Only Bitcoin Tips. Powered by ICP Hackathon.</div>
     </div>
   );
 } 
