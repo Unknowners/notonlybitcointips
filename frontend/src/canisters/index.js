@@ -1,14 +1,18 @@
 import { Actor, HttpAgent } from "@dfinity/agent";
 import { idlFactory } from './user_canister.did.js';
 
-export const canisterId = import.meta.env.VITE_CANISTER_ID_USER_CANISTER || "g7k3j-maaaa-aaaah-arinq-cai";
+// Determine canister ID based on environment
+const isMainnet = window.location.hostname.includes('ic0.app') || 
+                 window.location.hostname.includes('icp0.io') ||
+                 window.location.hostname.includes('icp1.io') ||
+                 import.meta.env.VITE_DFX_NETWORK === 'ic';
+
+export const canisterId = isMainnet 
+  ? "g7k3j-maaaa-aaaah-arinq-cai" // Production canister ID
+  : (import.meta.env.VITE_CANISTER_ID_USER_CANISTER || "g7k3j-maaaa-aaaah-arinq-cai"); // Local canister ID
 
 // Determine canister host from environment variables for flexibility between
 // local and production deployments.
-const isMainnet = window.location.hostname.includes('ic0.app') || 
-                 window.location.hostname.includes('icp0.io') ||
-                 import.meta.env.VITE_DFX_NETWORK === 'ic';
-
 const defaultHost = isMainnet ? "https://ic0.app" : "http://127.0.0.1:4943";
 const host = import.meta.env.VITE_CANISTER_HOST || defaultHost;
 
@@ -16,6 +20,7 @@ console.log('🌐 Canister host detection:', {
   hostname: window.location.hostname,
   isMainnet,
   host,
+  canisterId,
   VITE_DFX_NETWORK: import.meta.env.VITE_DFX_NETWORK
 });
 

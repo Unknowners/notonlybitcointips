@@ -39,18 +39,22 @@ export default function MainApp() {
   // Налаштування мережі
   const isMainnet = window.location.hostname.includes('ic0.app') || 
                    window.location.hostname.includes('icp0.io') ||
+                   window.location.hostname.includes('icp1.io') ||
                    import.meta.env.VITE_DFX_NETWORK === 'ic';
   
-  const internetIdentityCanisterId = import.meta.env.VITE_CANISTER_ID_INTERNET_IDENTITY;
+  const internetIdentityCanisterId = isMainnet
+    ? "rdmx6-jaaaa-aaaaa-aaadq-cai" // Production Internet Identity
+    : (import.meta.env.VITE_CANISTER_ID_INTERNET_IDENTITY || 'u6s2n-gx777-77774-qaaba-cai'); // Local Internet Identity
   
   const identityProvider = isMainnet
     ? 'https://identity.ic0.app' // Mainnet
-    : `http://${internetIdentityCanisterId || 'u6s2n-gx777-77774-qaaba-cai'}.localhost:4943`; // Local
+    : `http://${internetIdentityCanisterId}.localhost:4943`; // Local
     
   console.log('🌐 Network detection:', {
     hostname: window.location.hostname,
     isMainnet,
     identityProvider,
+    internetIdentityCanisterId,
     VITE_CANISTER_ID_INTERNET_IDENTITY: import.meta.env.VITE_CANISTER_ID_INTERNET_IDENTITY,
     VITE_DFX_NETWORK: import.meta.env.VITE_DFX_NETWORK
   });
