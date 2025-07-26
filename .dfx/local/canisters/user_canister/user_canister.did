@@ -15,6 +15,7 @@ type UserCanister =
    getAllCampaigns: () -> (vec Campaign) query;
    getAllUsers: () -> (vec User) query;
    getCampaign: (id: text) -> (opt Campaign) query;
+   getCampaignSubaccount: (id: text) -> (opt blob) query;
    getPrincipal: () -> (principal) query;
    getUserCampaigns: (userId: UserId) -> (vec Campaign) query;
    userExists: () -> (bool) query;
@@ -36,5 +37,6 @@ type Campaign =
    id: CampaignId;
    name: text;
    owner: UserId;
+   subaccount: blob;
  };
 service : () -> UserCanister

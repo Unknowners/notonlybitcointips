@@ -28,7 +28,9 @@ export async function accountIdentifier(principal: string, sub: Uint8Array): Pro
   data.set(padding, 0);
   data.set(principalBytes, padding.length);
   data.set(sub, padding.length + principalBytes.length);
-  const hash = new Uint8Array(await crypto.subtle.digest('SHA-224', data));
+  const fullHash = new Uint8Array(await crypto.subtle.digest('SHA-256', data));
+  // Truncate to 28 bytes to maintain compatibility with ICP account format
+  const hash = fullHash.slice(0, 28);
   const checksum = crc32(hash);
   const result = new Uint8Array(checksum.length + hash.length);
   result.set(checksum, 0);

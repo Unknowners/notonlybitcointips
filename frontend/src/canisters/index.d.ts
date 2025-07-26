@@ -1,3 +1,4 @@
+export const canisterId: string;
 export const user_canister: {
   getAllCampaigns: () => Promise<any[]>;
   createUser: (name: string, email: string[] | []) => Promise<boolean>;

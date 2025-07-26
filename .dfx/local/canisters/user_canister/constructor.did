@@ -4,6 +4,7 @@ type Campaign = record {
   name : text;
   createdAt : nat64;
   acceptedTokens : vec text;
+  subaccount : blob;
   description : text;
 };
 type CampaignId = text;
@@ -22,6 +23,7 @@ type UserCanister = service {
   getAllCampaigns : () -> (vec Campaign) query;
   getAllUsers : () -> (vec User) query;
   getCampaign : (text) -> (opt Campaign) query;
+  getCampaignSubaccount : (text) -> (opt blob) query;
   getPrincipal : () -> (principal) query;
   getUserCampaigns : (UserId) -> (vec Campaign) query;
   userExists : () -> (bool) query;

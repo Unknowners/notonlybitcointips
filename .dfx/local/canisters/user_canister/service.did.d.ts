@@ -8,6 +8,7 @@ export interface Campaign {
   'name' : string,
   'createdAt' : bigint,
   'acceptedTokens' : Array<string>,
+  'subaccount' : Uint8Array | number[],
   'description' : string,
 }
 export type CampaignId = string;
@@ -26,6 +27,7 @@ export interface UserCanister {
   'getAllCampaigns' : ActorMethod<[], Array<Campaign>>,
   'getAllUsers' : ActorMethod<[], Array<User>>,
   'getCampaign' : ActorMethod<[string], [] | [Campaign]>,
+  'getCampaignSubaccount' : ActorMethod<[string], [] | [Uint8Array | number[]]>,
   'getPrincipal' : ActorMethod<[], Principal>,
   'getUserCampaigns' : ActorMethod<[UserId], Array<Campaign>>,
   'userExists' : ActorMethod<[], boolean>,
