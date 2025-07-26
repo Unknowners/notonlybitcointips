@@ -1,38 +1,30 @@
-type UserId = principal;
-type User = 
- record {
-   createdAt: Time;
-   email: opt text;
-   id: UserId;
-   name: text;
- };
-type Time = int;
+type Campaign = record {
+  id : CampaignId;
+  owner : UserId;
+  name : text;
+  createdAt : nat64;
+  acceptedTokens : vec text;
+  description : text;
+};
 type CampaignId = text;
-type Campaign = 
- record {
-   acceptedTokens: vec text;
-   createdAt: Time;
-   description: text;
-   id: CampaignId;
-   name: text;
-   owner: UserId;
- };
-service : {
-  clearUsers: () -> ();
-  createCampaign: (name: text, description: text, acceptedTokens:
-   vec text) -> (text);
-  createUser: (name: text, email: opt text) -> (bool);
-  debugCompare: (userId: principal) ->
-   (vec record {
-          text;
-          principal;
-          bool;
-        }) query;
-  debugPrincipal: (userId: principal) -> (text) query;
-  getAllCampaigns: () -> (vec Campaign) query;
-  getAllUsers: () -> (vec User) query;
-  getCampaign: (id: CampaignId) -> (opt Campaign) query;
-  getUserCampaigns: (userIdText: text) -> (vec Campaign) query;
-  userExists: () -> (bool) query;
-  whoami: () -> (principal) query;
-}
+type User = record {
+  id : UserId;
+  name : text;
+  createdAt : nat64;
+  email : opt text;
+};
+type UserCanister = service {
+  clearUsers : () -> ();
+  createCampaign : (text, text, vec text) -> (text);
+  createUser : (text, opt text) -> (bool);
+  debugCompare : (UserId) -> (vec record { text; principal; bool }) query;
+  debugPrincipal : (UserId) -> (text) query;
+  getAllCampaigns : () -> (vec Campaign) query;
+  getAllUsers : () -> (vec User) query;
+  getCampaign : (text) -> (opt Campaign) query;
+  getUserCampaigns : (UserId) -> (vec Campaign) query;
+  userExists : () -> (bool) query;
+  whoami : () -> (principal);
+};
+type UserId = principal;
+service : () -> UserCanister

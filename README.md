@@ -1,211 +1,172 @@
-# Donation Hub - ICP DApp
+# Not Only Bitcoin Tips
 
-DApp для створення кампаній збору коштів на Internet Computer з підтримкою авторизації через Internet Identity.
+DApp for creating fundraising campaigns on Internet Computer with Internet Identity authentication support.
 
-## Особливості
+## Features
 
-- 🔐 Авторизація через Internet Identity
-- 🎯 Створення кампаній збору коштів
-- 📱 QR-коди для поширення кампаній
-- 💰 Підтримка різних валют (ICP, BTC, ETH, USDT)
-- 🎨 Сучасний UI з Tailwind CSS
+- 🎯 Creating fundraising campaigns
+- 📱 QR codes for campaign sharing
+- 🔐 Secure authentication via Internet Identity
+- 💰 Support for multiple cryptocurrencies (ICP, BTC, ETH, USDT)
+- 🌐 Decentralized on Internet Computer
 
-## Технології
+## Tech Stack
 
+- **Frontend**: React + TypeScript + Vite + Tailwind CSS
 - **Backend**: Motoko (Internet Computer)
-- **Frontend**: React + TypeScript + Vite
-- **Авторизація**: Internet Identity
-- **Стилізація**: Tailwind CSS
+- **Authentication**: Internet Identity
+- **Deployment**: DFX + Internet Computer
 
-## Встановлення та запуск
+## Quick Start
 
-### Передумови
+### Prerequisites
 
-1. Встановіть [DFX](https://internetcomputer.org/docs/current/developer-docs/setup/install/)
-2. Встановіть Node.js (версія 16 або вище)
+- [DFX](https://internetcomputer.org/docs/current/developer-docs/setup/install/) installed
+- [Node.js](https://nodejs.org/) (v16 or higher)
+- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
 
-### Кроки запуску
+### Local Development
 
-1. **Клонуйте репозиторій**
+1. **Clone the repository**
    ```bash
    git clone <repository-url>
    cd notonlybitcointips
    ```
 
-2. **Встановіть залежності фронтенду**
+2. **Install dependencies**
    ```bash
-   cd frontend
    npm install
-   cd ..
+   cd frontend && npm install
    ```
 
-3. **Запустіть локальну мережу Internet Computer**
+3. **Start local Internet Computer replica**
    ```bash
    dfx start --clean --background
    ```
 
-4. **Розгорніть canisters**
+4. **Deploy canisters**
    ```bash
    dfx deploy
    ```
 
-5. **Запустіть фронтенд у режимі розробки**
+5. **Start frontend development server**
+   ```bash
+   cd frontend && npm run dev
+   ```
+
+6. **Open the application**
+   - Frontend: http://localhost:5173
+   - Internet Identity: http://127.0.0.1:4943/?canisterId=umunu-kh777-77774-qaaca-cai&id=u6s2n-gx777-77774-qaaba-cai
+
+### Environment Setup
+
+1. **Create canister_ids.json** (if not exists):
+   ```bash
+   cp canister_ids.json.example canister_ids.json
+   ```
+
+2. **Create frontend/.env**:
    ```bash
    cd frontend
-   npm run dev
+   echo "VITE_CANISTER_ID_USER_CANISTER=$(dfx canister id user_canister)" > .env
+   echo "VITE_CANISTER_ID_INTERNET_IDENTITY=$(dfx canister id internet_identity)" >> .env
+   echo "VITE_CANISTER_HOST=http://127.0.0.1:4943" >> .env
+   echo "DFX_NETWORK=local" >> .env
+   echo "VITE_DFX_NETWORK=local" >> .env
    ```
 
-6. **Налаштуйте canister IDs для локальної розробки**
-   ```bash
-   # Скопіюйте шаблон
-   cp canister_ids.json.example canister_ids.json
-   
-   # Отримайте локальні canister IDs
-   dfx canister id frontend
-   dfx canister id user_canister
-   dfx canister id internet_identity
-   
-   # Оновіть canister_ids.json з отриманими ID
-   ```
+## Usage
 
-7. **Відкрийте браузер**
-   - Локальний фронтенд: http://localhost:5173
-   - Розгорнутий фронтенд: http://127.0.0.1:4943
+### Authentication
 
-## Використання
+1. Open the application in your browser
+2. Click "Sign in with Internet Identity"
+3. Follow the instructions to create or sign in to Internet Identity
 
-### Авторизація
+### Creating a Campaign
 
-1. Відкрийте додаток у браузері
-2. Натисніть "Увійти через Internet Identity"
-3. Слідуйте інструкціям для створення або входу в Internet Identity
-4. Після успішної авторизації ви побачите свій Principal ID
+1. After authentication, fill out the registration form
+2. Go to campaign creation
+3. Fill in the name, description, and select currencies for donations
+4. Click "Create Campaign"
 
-### Створення кампанії
+### Sharing Campaigns
 
-1. Після авторизації заповніть форму реєстрації
-2. Перейдіть до створення кампанії
-3. Заповніть назву, опис та виберіть валюти для донатів
-4. Натисніть "Створити кампанію"
-5. Скопіюйте лінк або QR-код для поширення
+- Each campaign gets a unique URL and QR code
+- Share the link or QR code to collect donations
+- Support for multiple cryptocurrencies
 
-## Структура проекту
+## Project Structure
 
 ```
 notonlybitcointips/
 ├── backend/
-│   ├── user_canister.mo      # Motoko canister
-│   └── user_canister.did     # Candid interface
+│   ├── user_canister.did    # Candid interface
+│   └── user_canister.mo     # Motoko backend
 ├── frontend/
 │   ├── src/
-│   │   ├── App.tsx           # Головний компонент
-│   │   ├── MainApp.tsx       # Основний інтерфейс з авторизацією
-│   │   ├── CampaignPage.tsx  # Сторінка кампанії
-│   │   └── canisters/        # Генеровані файли для роботи з canisters
+│   │   ├── App.tsx          # Main app component
+│   │   ├── MainApp.tsx      # Authentication & campaign creation
+│   │   ├── CampaignPage.tsx # Campaign page
+│   │   └── canisters/       # Canister integration
 │   ├── package.json
 │   └── vite.config.ts
-└── dfx.json                  # Конфігурація DFX
+├── dfx.json                 # DFX configuration
+└── canister_ids.json        # Canister IDs mapping
 ```
 
-## Internet Identity
+## Deployment
 
-Проект використовує Internet Identity для авторизації користувачів. При локальній розробці використовується локальний Internet Identity canister.
-
-## Локальна розробка
-
-### Налаштування canister IDs
-
-Після клонування репозиторію та першого запуску:
-
-1. **Скопіюйте шаблон canister IDs:**
-   ```bash
-   cp canister_ids.json.example canister_ids.json
-   ```
-
-2. **Отримайте локальні canister IDs:**
-   ```bash
-   dfx canister id frontend
-   dfx canister id user_canister  
-   dfx canister id internet_identity
-   ```
-
-3. **Оновіть canister_ids.json з отриманими ID**
-
-4. **Створіть .env файл для frontend:**
-   ```bash
-   cd frontend
-   echo "VITE_CANISTER_ID_USER_CANISTER=YOUR_LOCAL_USER_CANISTER_ID" > .env
-   echo "VITE_CANISTER_ID_INTERNET_IDENTITY=YOUR_LOCAL_INTERNET_IDENTITY_ID" >> .env
-   echo "VITE_CANISTER_HOST=http://127.0.0.1:4943" >> .env
-   echo "DFX_NETWORK=local" >> .env
-   ```
-
-**Примітка:** `canister_ids.json` не комітиться в git, оскільки містить локальні canister IDs, які змінюються при кожному перезапуску.
-
-## Розгортання в Mainnet
-
-Для розгортання в Internet Computer mainnet використовуйте автоматичний скрипт:
+### Local Deployment
 
 ```bash
-# Автоматичне розгортання
-./scripts/deploy-to-mainnet.sh
-```
-
-Або виконайте кроки вручну:
-
-1. **Підготовка акаунту**
-   - Створіть Internet Identity: https://identity.ic0.app/
-   - Поповніть баланс ICP: https://nns.ic0.app/
-   - Налаштуйте dfx identity: `dfx identity new mainnet-identity`
-
-2. **Розгортання**
-```bash
-# Створення canisters
-dfx canister --network ic create --all
-
-# Розгортання backend
-dfx deploy --network ic user_canister
-
-# Оновлення canister IDs
-node scripts/update-canister-ids.js
-
-# Збірка та розгортання frontend
-cd frontend && npm run build && cd ..
-dfx deploy --network ic frontend
-```
-
-Детальний гід: [DEPLOYMENT.md](./DEPLOYMENT.md)
-
-### Налаштування для різних мереж
-
-- **Локальна розробка**: `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`
-- **Mainnet**: `https://identity.ic0.app`
-
-## Розробка
-
-### Локальна розробка фронтенду
-
-Для швидкої розробки використовуйте локальний сервер:
-
-```bash
-cd frontend
-npm run dev
-```
-
-Це дозволить використовувати Hot Module Reloading для миттєвих змін.
-
-### Розгортання змін
-
-Після внесення змін у код:
-
-```bash
-# Для змін у backend
 dfx deploy
-
-# Для змін у frontend
-dfx deploy frontend
 ```
 
-## Ліцензія
+### Mainnet Deployment
 
-MIT License
+```bash
+dfx deploy --network ic
+```
+
+## Development
+
+### Backend (Motoko)
+
+The backend is written in Motoko and handles:
+- User management
+- Campaign creation and retrieval
+- Data persistence on Internet Computer
+
+### Frontend (React)
+
+The frontend is built with React and provides:
+- User authentication via Internet Identity
+- Campaign creation interface
+- QR code generation for sharing
+- Responsive design with Tailwind CSS
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test locally
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.
+
+## Support
+
+For issues and questions:
+- Check the [Internet Computer documentation](https://internetcomputer.org/docs/current/developer-docs/)
+- Review the [DFX documentation](https://internetcomputer.org/docs/current/developer-docs/setup/install/)
+- Open an issue in this repository
+
+## Acknowledgments
+
+- Built for ICP Hackathon
+- Powered by Internet Computer
+- Uses Internet Identity for authentication

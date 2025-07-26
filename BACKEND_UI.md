@@ -1,75 +1,83 @@
-# Backend Candid UI
+# Backend API Documentation
 
-## Доступні функції бекенду
+This document describes the backend API for the Not Only Bitcoin Tips application.
 
-Для тестування та управління бекендом використовуйте Candid UI:
+## Canister: user_canister
 
-### Основні URL:
+### Users:
+- `createUser(name: text, email: opt text) -> (bool)` - Create a new user
+- `userExists() -> (bool) query` - Check if current user exists
+- `whoami() -> (principal) query` - Get current user's Principal ID
 
-- **Frontend**: http://uzt4z-lp777-77774-qaabq-cai.localhost:4943/
-- **Backend Candid UI**: http://127.0.0.1:4943/?canisterId=u6s2n-gx777-77774-qaaba-cai&id=uxrrr-q7777-77774-qaaaq-cai
+### Campaigns:
+- `createCampaign(name: text, description: text, acceptedTokens: vec text) -> (text)` - Create a campaign
+- `getCampaign(id: text) -> (opt Campaign) query` - Get campaign by ID
+- `getUserCampaigns(userId: UserId) -> (vec Campaign) query` - Get user's campaigns
+- `getAllCampaigns() -> (vec Campaign) query` - Get all campaigns
 
-## Доступні функції в Candid UI:
+## Data Types
 
-### Користувачі:
-- `createUser(name: text, email: opt text) -> (bool)` - Створити користувача
-- `getAllUsers() -> (vec User) query` - Отримати всіх користувачів
-- `clearUsers() -> ()` - Очистити всіх користувачів (для тестування)
-
-### Кампанії:
-- `createCampaign(name: text, description: text, acceptedTokens: vec text) -> (text)` - Створити кампанію
-- `getCampaign(id: text) -> (opt Campaign) query` - Отримати кампанію за ID
-- `getUserCampaigns(userId: UserId) -> (vec Campaign) query` - Отримати кампанії користувача
-- `getAllCampaigns() -> (vec Campaign) query` - Отримати всі кампанії
-
-### Авторизація:
-- `whoami() -> (principal) query` - Отримати Principal ID поточного користувача
-- `userExists() -> (bool) query` - Перевірити чи існує користувач
-
-### Діагностика:
-- `debugCompare(userId: UserId) -> (vec (text, principal, bool)) query` - Порівняти користувачів
-- `debugPrincipal(userId: UserId) -> (text) query` - Конвертувати Principal в текст
-
-## Як використовувати Candid UI:
-
-1. **Відкрийте посилання**: http://127.0.0.1:4943/?canisterId=u6s2n-gx777-77774-qaaba-cai&id=uxrrr-q7777-77774-qaaaq-cai
-
-2. **Для очищення користувачів**:
-   - Знайдіть функцію `clearUsers`
-   - Натисніть "Call"
-   - Це видалить всіх користувачів з бази даних
-
-3. **Для перегляду користувачів**:
-   - Використовуйте `getAllUsers` для перегляду всіх користувачів
-
-4. **Для тестування авторизації**:
-   - Використовуйте `whoami` для отримання Principal ID
-
-## Типи даних:
-
-```candid
-type UserId = principal;
-type CampaignId = text;
-
-type User = record {
+### User
+```motoko
+type User = {
   id: UserId;
   name: text;
   email: opt text;
-  createdAt: int;
+  createdAt: nat64;
 };
+```
 
-type Campaign = record {
-  id: CampaignId;
+### Campaign
+```motoko
+type Campaign = {
+  id: text;
   name: text;
   description: text;
   owner: UserId;
   acceptedTokens: vec text;
-  createdAt: int;
+  createdAt: nat64;
 };
 ```
 
-## Примітки:
+### UserId
+```motoko
+type UserId = principal;
+```
 
-- Функція `clearUsers` призначена тільки для тестування
-- Всі функції з `query` не змінюють стан canister
-- Функції без `query` можуть змінювати стан canister 
+## Usage Examples
+
+### Creating a User
+```javascript
+const result = await actor.createUser("John Doe", ["john@example.com"]);
+console.log("User created:", result);
+```
+
+### Creating a Campaign
+```javascript
+const campaignId = await actor.createCampaign(
+  "Support Ukraine", 
+  "Help people affected by war", 
+  ["ICP", "BTC", "ETH"]
+);
+console.log("Campaign ID:", campaignId);
+```
+
+### Getting User Campaigns
+```javascript
+const principal = await actor.whoami();
+const campaigns = await actor.getUserCampaigns(principal.toString());
+console.log("User campaigns:", campaigns);
+```
+
+## Error Handling
+
+The backend returns appropriate error messages for:
+- Invalid input data
+- User not found
+- Campaign not found
+- Authentication failures
+
+## Testing
+
+Use the Candid UI to test the API:
+- Local: http://127.0.0.1:4943/?canisterId=umunu-kh777-77774-qaaca-cai&id=uzt4z-lp777-77774-qaabq-cai 
