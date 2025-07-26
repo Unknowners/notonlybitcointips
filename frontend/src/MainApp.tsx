@@ -210,7 +210,7 @@ export default function MainApp() {
         try {
           // Використовуємо whoami + getUserCampaigns для отримання кампаній поточного користувача
           const principal = await authState.actor.whoami();
-          const res = await authState.actor.getUserCampaigns(principal.toString()) as Campaign[];
+          const res = await authState.actor.getUserCampaigns(principal) as Campaign[];
           // Конвертуємо BigInt в string для JSON
           const campaignsForDisplay = res.map(campaign => ({
             ...campaign,
