@@ -265,6 +265,13 @@ export default function MainApp() {
 
   const handleCreateCampaign = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Валідація: перевіряємо чи вибрана хоча б одна валюта
+    if (campaign.tokens.length === 0) {
+      setError("Please select at least one currency for donations");
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     try {
@@ -434,27 +441,46 @@ export default function MainApp() {
               />
             </div>
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Currencies for Donations</label>
+              <label className="block text-gray-700 font-semibold mb-2">Currencies for Donations <span className="text-red-500">*</span></label>
               <div className="flex flex-wrap gap-3">
-                {TOKENS.map(token => (
-                  <label key={token} className="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg shadow-sm cursor-pointer hover:bg-blue-50 transition">
-                    <input
-                      type="checkbox"
-                      checked={campaign.tokens.includes(token)}
-                      onChange={e => {
-                        setCampaign(c => ({
-                          ...c,
-                          tokens: e.target.checked
-                            ? [...c.tokens, token]
-                            : c.tokens.filter(t => t !== token),
-                        }));
-                      }}
-                      className="accent-indigo-500 w-5 h-5"
-                    />
-                    <span className="font-medium text-gray-700">{token}</span>
-                  </label>
-                ))}
+                {TOKENS.map(token => {
+                  const isAvailable = token === "ICP";
+                  const isSelected = campaign.tokens.includes(token);
+                  
+                  return (
+                    <label 
+                      key={token} 
+                      className={`flex items-center space-x-2 px-3 py-2 rounded-lg shadow-sm transition ${
+                        isAvailable 
+                          ? 'bg-gray-100 cursor-pointer hover:bg-blue-50' 
+                          : 'bg-gray-50 cursor-not-allowed opacity-60'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={e => {
+                          if (isAvailable) {
+                            setCampaign(c => ({
+                              ...c,
+                              tokens: e.target.checked
+                                ? [...c.tokens, token]
+                                : c.tokens.filter(t => t !== token),
+                            }));
+                          }
+                        }}
+                        disabled={!isAvailable}
+                        className="accent-indigo-500 w-5 h-5"
+                      />
+                      <span className="font-medium text-gray-700">{token}</span>
+                      {!isAvailable && (
+                        <span className="text-xs text-gray-500 bg-gray-200 px-1 py-0.5 rounded">Coming Soon</span>
+                      )}
+                    </label>
+                  );
+                })}
               </div>
+
             </div>
             {error && <div className="text-red-500 text-sm font-semibold text-center">{error}</div>}
             <button
