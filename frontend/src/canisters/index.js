@@ -13,7 +13,11 @@ const isMainnet = window.location.hostname.includes('ic0.app') ||
                  window.location.hostname.includes('ninja.ic0.app');
 
 // For development, always use local canister even if deployed on mainnet
-const isDevelopment = import.meta.env.DEV || window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1');
+const isDevelopment = import.meta.env.DEV || 
+                     window.location.hostname.includes('localhost') || 
+                     window.location.hostname.includes('127.0.0.1') ||
+                     window.location.hostname.includes('ninja.ic0.app') ||
+                     window.location.hostname.includes('icp1.io');
 
 // Import canister IDs from configuration
 import canisterIds from '../../../canister_ids.json';
