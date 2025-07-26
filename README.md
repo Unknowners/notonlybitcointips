@@ -98,6 +98,40 @@ notonlybitcointips/
 
 Проект використовує Internet Identity для авторизації користувачів. При локальній розробці використовується локальний Internet Identity canister.
 
+## Розгортання в Mainnet
+
+Для розгортання в Internet Computer mainnet використовуйте автоматичний скрипт:
+
+```bash
+# Автоматичне розгортання
+./scripts/deploy-to-mainnet.sh
+```
+
+Або виконайте кроки вручну:
+
+1. **Підготовка акаунту**
+   - Створіть Internet Identity: https://identity.ic0.app/
+   - Поповніть баланс ICP: https://nns.ic0.app/
+   - Налаштуйте dfx identity: `dfx identity new mainnet-identity`
+
+2. **Розгортання**
+```bash
+# Створення canisters
+dfx canister --network ic create --all
+
+# Розгортання backend
+dfx deploy --network ic user_canister
+
+# Оновлення canister IDs
+node scripts/update-canister-ids.js
+
+# Збірка та розгортання frontend
+cd frontend && npm run build && cd ..
+dfx deploy --network ic frontend
+```
+
+Детальний гід: [DEPLOYMENT.md](./DEPLOYMENT.md)
+
 ### Налаштування для різних мереж
 
 - **Локальна розробка**: `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`

@@ -1,0 +1,30 @@
+{
+  "name": "notonlybitcointips",
+  "version": "1.0.0",
+  "description": "Donation Hub - ICP DApp with Internet Identity authentication",
+  "scripts": {
+    "dev": "dfx start --background && dfx deploy && cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "deploy:local": "dfx deploy",
+    "deploy:mainnet": "./scripts/deploy-to-mainnet.sh",
+    "update-ids": "node scripts/update-canister-ids.js",
+    "clean": "dfx stop && dfx start --clean --background",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "keywords": [
+    "internet-computer",
+    "motoko",
+    "react",
+    "typescript",
+    "internet-identity",
+    "dapp",
+    "donation",
+    "fundraising"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "@dfinity/agent": "^0.15.6",
+    "@dfinity/auth-client": "^0.15.6"
+  }
+} 
