@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:production": "tsc -b && vite build --mode production",
     "ci-build": "npm ci && npm run build",
     "lint": "eslint .",
     "preview": "vite preview"
