@@ -115,7 +115,17 @@ export default function MainApp() {
                     let userExists = false;
                     try {
                       console.log('🔍 Checking user existence via getUserCampaigns...');
-                      const principal = await actor.whoami();
+                      // Спробуємо whoami, але якщо його немає, використовуємо анонімний principal
+                      let principal;
+                      try {
+                        principal = await actor.whoami();
+                      } catch (whoamiError) {
+                        console.log('❌ whoami not available, using anonymous principal');
+                        // Використовуємо анонімний principal для production canister
+                        // Імпортуємо Principal з @dfinity/principal
+                        const { Principal } = await import('@dfinity/principal');
+                        principal = Principal.fromText("2vxsx-fae");
+                      }
                       await actor.getUserCampaigns(principal);
                       console.log('✅ User exists - getUserCampaigns succeeded');
                       userExists = true;
@@ -190,9 +200,10 @@ export default function MainApp() {
       }));
     } catch (error) {
       console.error('❌ Error calling whoami:', error);
+      // Якщо whoami не доступний, показуємо повідомлення
       setAuthState((prev) => ({
         ...prev,
-        principal: 'Error getting Principal ID'
+        principal: 'Whoami not available in production'
       }));
     }
   };
@@ -210,7 +221,16 @@ export default function MainApp() {
       for (let i = 0; i < retries; i++) {
         try {
           // Використовуємо whoami + getUserCampaigns для отримання кампаній поточного користувача
-          const principal = await authState.actor.whoami();
+          let principal;
+          try {
+            principal = await authState.actor.whoami();
+          } catch (whoamiError) {
+            console.log('❌ whoami not available, using anonymous principal');
+            // Використовуємо анонімний principal для production canister
+            // Імпортуємо Principal з @dfinity/principal
+            const { Principal } = await import('@dfinity/principal');
+            principal = Principal.fromText("2vxsx-fae");
+          }
           const res = await authState.actor.getUserCampaigns(principal) as Campaign[];
           // Конвертуємо BigInt в string для JSON
           const campaignsForDisplay = res.map(campaign => ({
