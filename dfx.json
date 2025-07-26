@@ -5,6 +5,11 @@
       "type": "motoko",
       "args": "--enhanced-orthogonal-persistence"
     },
+    "user_canister_new": {
+      "main": "backend/user_canister.mo",
+      "type": "motoko",
+      "args": "--enhanced-orthogonal-persistence"
+    },
     "frontend": {
       "dependencies": ["user_canister"],
       "frontend": {
