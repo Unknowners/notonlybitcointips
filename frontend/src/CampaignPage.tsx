@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { useParams, useNavigate } from "react-router-dom";
 import { user_canister } from "./canisters/index.js";
 import { getSimulatedBalance, formatBalance } from "./ledger";
 import { getAccountBalance } from "./ledger"; // Added import for getAccountBalance
@@ -16,18 +16,27 @@ type Campaign = {
 };
 
 export default function CampaignPage() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);
   const [accountId, setAccountId] = useState<string | null>(null);
   const [balance, setBalance] = useState<bigint>(0n);
   const [balanceLoading, setBalanceLoading] = useState(false);
+  
+  // Withdraw form state
   const [withdrawAddress, setWithdrawAddress] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
   const [withdrawSuccess, setWithdrawSuccess] = useState(false);
+  
+  // Share state
+  const [showShare, setShowShare] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
 
+  // Завантажуємо кампанію при зміні ID
   useEffect(() => {
     if (id) {
       loadCampaign();
@@ -35,16 +44,26 @@ export default function CampaignPage() {
   }, [id]);
 
   const loadCampaign = async () => {
+    if (!id) return;
+    
     try {
-      const res = await user_canister.getCampaign(id!);
-      if (res[0]) {
-        const campaignData = res[0] as Campaign;
+      const campaignData = await user_canister.getCampaign(id);
+      if (campaignData) {
         setCampaign(campaignData);
         
-        // Використовуємо accountId з кампанії
-        if (campaignData.accountId) {
-          setAccountId(campaignData.accountId);
-          loadBalance(campaignData.accountId);
+        // Отримуємо account ID для кампанії
+        const accountIdData = await user_canister.getCampaignAccountId(id);
+        if (accountIdData) {
+          setAccountId(accountIdData);
+        }
+        
+        // Перевіряємо чи поточний користувач є власником
+        try {
+          const currentUser = await user_canister.whoami();
+          setIsOwner(currentUser === campaignData.owner);
+        } catch (error) {
+          console.log('User not authenticated or error getting current user');
+          setIsOwner(false);
         }
       }
     } catch (error) {
@@ -70,11 +89,16 @@ export default function CampaignPage() {
     }
   };
 
-  // Автоматично оновлюємо баланс кожні 10 секунд
+  // Оновлення балансу кожні 10 секунд
   useEffect(() => {
     if (!accountId) return;
 
+    // Завантажуємо баланс одразу
+    loadBalance(accountId);
+
+    // Встановлюємо інтервал для оновлення кожні 10 секунд
     const interval = setInterval(() => {
+      console.log('Updating balance...'); // Логуємо для дебагу
       loadBalance(accountId);
     }, 10000);
 
@@ -96,11 +120,18 @@ export default function CampaignPage() {
         return;
       }
 
+      // Перевіряємо чи сума не перевищує баланс
+      const amountE8s = BigInt(Math.floor(amount * 100_000_000));
+      if (amountE8s > balance) {
+        setWithdrawError("Amount cannot exceed campaign balance");
+        return;
+      }
+
       // Тут буде виклик до backend для виведення коштів
       const result = await user_canister.withdrawFunds({
         campaignId: campaign.id,
         targetAddress: withdrawAddress,
-        amount: BigInt(Math.floor(amount * 100_000_000)) // Конвертуємо в e8s
+        amount: amountE8s
       });
 
       if (result) {
@@ -147,9 +178,20 @@ export default function CampaignPage() {
           <p className="text-sm text-green-600 mt-1">Updated every 10 seconds</p>
         </div>
 
-        {accountId && (
-          <div className="mb-6 text-center">
-            <h3 className="font-semibold text-gray-800 mb-2">Donation Address</h3>
+        {/* Share кнопка для всіх користувачів */}
+        <div className="mb-6 text-center">
+          <button
+            onClick={() => setShowShare(!showShare)}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
+          >
+            {showShare ? "Hide" : "Share"} Campaign
+          </button>
+        </div>
+
+        {/* Share секція з QR кодом та адресою */}
+        {showShare && accountId && (
+          <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+            <h3 className="font-semibold text-blue-900 mb-2">Donation Address</h3>
             <p className="text-sm text-gray-600 break-all font-mono mb-2 bg-gray-100 p-2 rounded">
               {accountId}
             </p>
@@ -163,9 +205,9 @@ export default function CampaignPage() {
         )}
 
         {/* Форма виведення коштів (тільки для власника кампанії) */}
-        {campaign.owner && (
+        {isOwner && (
           <div className="mb-6 p-4 bg-yellow-50 rounded-lg">
-            <h3 className="font-semibold text-yellow-900 mb-2">Withdraw Funds</h3>
+            <h3 className="font-semibold text-yellow-900 mb-2">Withdraw Funds (Owner Only)</h3>
             <form onSubmit={handleWithdraw} className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-yellow-800 mb-1">
@@ -180,6 +222,7 @@ export default function CampaignPage() {
                   required
                 />
               </div>
+              
               <div>
                 <label className="block text-sm font-medium text-yellow-800 mb-1">
                   Amount (ICP)
@@ -187,23 +230,35 @@ export default function CampaignPage() {
                 <input
                   type="number"
                   step="0.00000001"
+                  min="0"
+                  max={formatBalance(balance)}
                   value={withdrawAmount}
                   onChange={(e) => setWithdrawAmount(e.target.value)}
                   placeholder="0.00000000"
                   className="w-full px-3 py-2 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
                   required
                 />
+                <p className="text-xs text-yellow-600 mt-1">
+                  Available: {formatBalance(balance)} ICP
+                </p>
               </div>
+
               {withdrawError && (
-                <div className="text-red-600 text-sm">{withdrawError}</div>
+                <div className="text-red-600 text-sm bg-red-50 p-2 rounded">
+                  {withdrawError}
+                </div>
               )}
+
               {withdrawSuccess && (
-                <div className="text-green-600 text-sm">Withdrawal successful!</div>
+                <div className="text-green-600 text-sm bg-green-50 p-2 rounded">
+                  Withdrawal successful!
+                </div>
               )}
+
               <button
                 type="submit"
                 disabled={withdrawLoading}
-                className="w-full bg-yellow-600 text-white py-2 rounded-md font-medium hover:bg-yellow-700 disabled:opacity-50"
+                className="w-full bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400 text-white font-semibold py-2 px-4 rounded-md transition-colors"
               >
                 {withdrawLoading ? "Processing..." : "Withdraw Funds"}
               </button>
@@ -211,14 +266,13 @@ export default function CampaignPage() {
           </div>
         )}
 
-        <div className="text-center">
-          <a 
-            href="/" 
-            className="inline-block bg-gradient-to-r from-blue-600 to-indigo-500 text-white py-3 px-6 rounded-xl font-bold text-lg shadow-lg hover:scale-105 active:scale-95 transition-all duration-200"
-          >
-            Back to Dashboard
-          </a>
-        </div>
+        {/* Кнопка повернення */}
+        <button
+          onClick={() => navigate("/")}
+          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition-all transform hover:scale-105"
+        >
+          Back to Dashboard
+        </button>
       </div>
     </div>
   );
