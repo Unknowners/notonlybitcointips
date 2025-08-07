@@ -9,28 +9,64 @@ const isLocal = window.location.hostname.includes('localhost') ||
 const isMainnet = window.location.hostname.includes('ic0.app') || 
                  window.location.hostname.includes('icp0.io') ||
                  window.location.hostname.includes('icp1.io') ||
-                 import.meta.env.VITE_DFX_NETWORK === 'ic' ||
-                 window.location.hostname.includes('ninja.ic0.app');
+                 import.meta.env.VITE_DFX_NETWORK === 'ic';
+
+// Check if running in ICP Ninja
+const isICPNinja = window.location.hostname.includes('ninja.ic0.app');
 
 // For development, always use local canister even if deployed on mainnet
 const isDevelopment = import.meta.env.DEV || 
                      window.location.hostname.includes('localhost') || 
-                     window.location.hostname.includes('127.0.0.1') ||
-                     window.location.hostname.includes('ninja.ic0.app') ||
-                     window.location.hostname.includes('icp1.io');
+                     window.location.hostname.includes('127.0.0.1');
 
 // Import canister IDs from configuration
 import canisterIds from '../../../canister_ids.json';
 
-export const canisterId = isDevelopment
-  ? (import.meta.env.VITE_CANISTER_ID_USER_CANISTER || canisterIds.user_canister.local) // Always use local for development
-  : isMainnet 
-  ? canisterIds.user_canister.ic // Production canister ID
-  : canisterIds.user_canister.local; // Default to local
+// Function to get canister ID from URL (for ICP Ninja)
+const getCanisterIdFromURL = () => {
+  // Try to extract canister ID from URL path
+  const pathParts = window.location.pathname.split('/');
+  for (let i = 0; i < pathParts.length; i++) {
+    const part = pathParts[i];
+    if (part && part.includes('-') && part.includes('cai')) {
+      return part;
+    }
+  }
+  return null;
+};
+
+// Get canister ID from environment or URL
+const getCanisterId = () => {
+  // First try environment variable
+  if (import.meta.env.VITE_CANISTER_ID_USER_CANISTER) {
+    return import.meta.env.VITE_CANISTER_ID_USER_CANISTER;
+  }
+  
+  // Then try URL (for ICP Ninja)
+  if (isICPNinja) {
+    const urlCanisterId = getCanisterIdFromURL();
+    if (urlCanisterId) {
+      return urlCanisterId;
+    }
+  }
+  
+  // Fall back to configuration
+  if (isICPNinja) {
+    return canisterIds.user_canister.ic;
+  } else if (isDevelopment) {
+    return canisterIds.user_canister.local;
+  } else if (isMainnet) {
+    return canisterIds.user_canister.ic;
+  } else {
+    return canisterIds.user_canister.local;
+  }
+};
+
+export const canisterId = getCanisterId();
 
 // Determine canister host from environment variables for flexibility between
 // local and production deployments.
-const defaultHost = isDevelopment ? "http://127.0.0.1:4943" : isMainnet ? "https://ic0.app" : "http://127.0.0.1:4943";
+const defaultHost = isICPNinja || isMainnet ? "https://ic0.app" : "http://127.0.0.1:4943";
 const host = import.meta.env.VITE_CANISTER_HOST || defaultHost;
 
 console.log('🌐 Canister host detection:', {
@@ -38,9 +74,11 @@ console.log('🌐 Canister host detection:', {
   isLocal,
   isMainnet,
   isDevelopment,
+  isICPNinja,
   host,
   canisterId,
-  VITE_DFX_NETWORK: import.meta.env.VITE_DFX_NETWORK
+  VITE_DFX_NETWORK: import.meta.env.VITE_DFX_NETWORK,
+  pathname: window.location.pathname
 });
 
 // Create a default agent for anonymous calls
@@ -61,7 +99,8 @@ export const createActor = (identity) => {
     identity: !!identity,
     host,
     canisterId,
-    isMainnet
+    isMainnet,
+    isICPNinja
   });
   
   const agent = new HttpAgent({ 

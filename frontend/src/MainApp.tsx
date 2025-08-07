@@ -46,17 +46,20 @@ export default function MainApp() {
                    window.location.hostname.includes('icp1.io') ||
                    import.meta.env.VITE_DFX_NETWORK === 'ic';
   
-  const internetIdentityCanisterId = isMainnet
+  const isICPNinja = window.location.hostname.includes('ninja.ic0.app');
+  
+  const internetIdentityCanisterId = (isMainnet || isICPNinja)
     ? "rdmx6-jaaaa-aaaaa-aaadq-cai" // Production Internet Identity
     : (import.meta.env.VITE_CANISTER_ID_INTERNET_IDENTITY || 'u6s2n-gx777-77774-qaaba-cai'); // Local Internet Identity
   
-  const identityProvider = isMainnet
+  const identityProvider = (isMainnet || isICPNinja)
     ? 'https://identity.ic0.app' // Mainnet
     : `http://${internetIdentityCanisterId}.localhost:4943`; // Local
     
   console.log('🌐 Network detection:', {
     hostname: window.location.hostname,
     isMainnet,
+    isICPNinja,
     identityProvider,
     internetIdentityCanisterId,
     VITE_CANISTER_ID_INTERNET_IDENTITY: import.meta.env.VITE_CANISTER_ID_INTERNET_IDENTITY,
