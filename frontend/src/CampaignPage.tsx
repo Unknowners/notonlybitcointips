@@ -33,7 +33,6 @@ export default function CampaignPage() {
   const [withdrawSuccess, setWithdrawSuccess] = useState(false);
   
   // Share state
-  const [showShare, setShowShare] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
 
   // Завантажуємо кампанію при зміні ID
@@ -218,18 +217,8 @@ export default function CampaignPage() {
           <p className="text-sm text-green-600 mt-1">Updated every 10 seconds</p>
         </div>
 
-        {/* Share кнопка для всіх користувачів */}
-        <div className="mb-6 text-center">
-          <button
-            onClick={() => setShowShare(!showShare)}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
-          >
-            {showShare ? "Hide" : "Share"} Campaign
-          </button>
-        </div>
-
-        {/* Share секція з QR кодом та адресою */}
-        {showShare && accountId && (
+        {/* Donation Address - показується відразу */}
+        {accountId && (
           <div className="mb-6 p-4 bg-blue-50 rounded-lg">
             <h3 className="font-semibold text-blue-900 mb-2">Donation Address</h3>
             <p className="text-sm text-gray-600 break-all font-mono mb-2 bg-gray-100 p-2 rounded">

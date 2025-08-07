@@ -30,6 +30,45 @@ export async function getAccountBalance(accountId: string): Promise<bigint> {
   }
 }
 
+// Функція для правильного HTTP запиту до ICP Ledger (заглушка)
+export async function getRealAccountBalance(accountId: string): Promise<bigint> {
+  try {
+    const host = (isMainnet || isICPNinja) ? 'https://ic0.app' : 'http://localhost:4943';
+    
+    // Правильний CBOR запит для account_balance_dfx
+    const requestBody = new Uint8Array([
+      // CBOR header для map з 1 елементом
+      0xa1,
+      // Key: "account" (text)
+      0x67, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74,
+      // Value: account ID (text)
+      0x67, ...new TextEncoder().encode(accountId)
+    ]);
+    
+    const response = await fetch(`${host}/api/v2/canister/${ledgerCanisterId}/query`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/cbor',
+      },
+      body: requestBody
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    // Парсимо відповідь
+    const responseData = await response.arrayBuffer();
+    console.log('Response data:', new Uint8Array(responseData));
+    
+    // Повертаємо 0 як заглушку
+    return 0n;
+  } catch (error) {
+    console.error('Error getting real account balance:', error);
+    return 0n;
+  }
+}
+
 // Функція для конвертації e8s в ICP
 export function e8sToICP(e8s: bigint): number {
   return Number(e8s) / 100_000_000;

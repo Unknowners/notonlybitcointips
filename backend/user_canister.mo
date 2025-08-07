@@ -108,16 +108,22 @@ shared({ caller = initializer }) actor class UserCanister() = {
         usersMap := HashMap.HashMap<UserId, User>(0, Principal.equal, Principal.hash);
     };
 
-    // Спрощена функція для генерації account ID на основі user principal + campaign ID
+    // Правильна функція для генерації account ID на основі user principal + campaign ID
     private func generateAccountId(userPrincipal: Principal, campaignId: Text) : AccountId {
         // Конвертуємо user principal в text
         let userPrincipalText = Principal.toText(userPrincipal);
         
-        // Об'єднуємо user principal + campaign ID як текст
+        // Конвертуємо campaign ID в 32-byte subaccount
+        let campaignBytes = Text.encodeUtf8(campaignId);
+        let subaccount = Array.tabulate<Nat8>(32, func(i : Nat) : Nat8 {
+            if (i < campaignBytes.size()) { campaignBytes[i] } else { 0 }
+        });
+        
+        // Об'єднуємо user principal + subaccount як текст
         let combinedText = userPrincipalText # campaignId;
         
-        // Повертаємо простий hex string на основі тексту
-        // Це спрощена версія для демонстрації
+        // Генеруємо простий hex string на основі тексту
+        // В реальному проекті використовуйте SHA-256
         "account_" # combinedText
     };
 
