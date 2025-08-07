@@ -47,24 +47,40 @@ export default function CampaignPage() {
     if (!id) return;
     
     try {
+      console.log('Loading campaign with ID:', id);
       const campaignData = await user_canister.getCampaign(id);
+      console.log('Campaign data received:', campaignData);
+      
       if (campaignData) {
         setCampaign(campaignData);
         
         // Отримуємо account ID для кампанії
-        const accountIdData = await user_canister.getCampaignAccountId(id);
-        if (accountIdData) {
-          setAccountId(accountIdData);
+        try {
+          console.log('Getting account ID for campaign:', id);
+          const accountIdData = await user_canister.getCampaignAccountId(id);
+          console.log('Account ID received:', accountIdData);
+          
+          if (accountIdData) {
+            setAccountId(accountIdData);
+          }
+        } catch (accountError) {
+          console.error('Error getting account ID:', accountError);
+          // Якщо не можемо отримати account ID, використовуємо ID кампанії
+          setAccountId(`account_${id}`);
         }
         
         // Перевіряємо чи поточний користувач є власником
         try {
           const currentUser = await user_canister.whoami();
+          console.log('Current user:', currentUser);
+          console.log('Campaign owner:', campaignData.owner);
           setIsOwner(currentUser === campaignData.owner);
-        } catch (error) {
-          console.log('User not authenticated or error getting current user');
+        } catch (authError) {
+          console.log('User not authenticated or error getting current user:', authError);
           setIsOwner(false);
         }
+      } else {
+        console.error('Campaign not found');
       }
     } catch (error) {
       console.error('Error loading campaign:', error);
@@ -163,7 +179,7 @@ export default function CampaignPage() {
         <div className="mb-4">
           <span className="font-semibold text-gray-800">Currencies for donations:</span>
           <div className="flex gap-2 mt-2">
-            {campaign.acceptedTokens.map((token: string) => (
+            {(campaign.acceptedTokens || []).map((token: string) => (
               <span key={token} className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">{token}</span>
             ))}
           </div>
