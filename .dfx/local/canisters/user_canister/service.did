@@ -1,5 +1,7 @@
+type AccountId = text;
 type Campaign = record {
   id : CampaignId;
+  accountId : AccountId;
   owner : UserId;
   name : text;
   createdAt : nat64;
@@ -8,6 +10,11 @@ type Campaign = record {
   description : text;
 };
 type CampaignId = text;
+type TransferRequest = record {
+  campaignId : CampaignId;
+  targetAddress : text;
+  amount : nat64;
+};
 type User = record {
   id : UserId;
   name : text;
@@ -20,14 +27,17 @@ type UserCanister = service {
   createUser : (text, opt text) -> (bool);
   debugCompare : (UserId) -> (vec record { text; principal; bool }) query;
   debugPrincipal : (UserId) -> (text) query;
+  getAccountBalance : (AccountId) -> (nat64) query;
   getAllCampaigns : () -> (vec Campaign) query;
   getAllUsers : () -> (vec User) query;
   getCampaign : (text) -> (opt Campaign) query;
+  getCampaignAccountId : (text) -> (opt AccountId) query;
   getCampaignSubaccount : (text) -> (opt blob) query;
   getPrincipal : () -> (principal) query;
   getUserCampaigns : (UserId) -> (vec Campaign) query;
   userExists : () -> (bool) query;
   whoami : () -> (principal);
+  withdrawFunds : (TransferRequest) -> (bool);
 };
 type UserId = principal;
 service : UserCanister

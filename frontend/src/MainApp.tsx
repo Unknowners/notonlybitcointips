@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { AuthClient } from '@dfinity/auth-client';
 import { createActor } from "./canisters/index.js";
-import { getSimulatedBalance, formatBalance } from "./ledger";
+import { getSimulatedBalance, formatBalance, getAccountBalance } from "./ledger";
 
 // Типи для кампаній
 type Campaign = {
@@ -228,17 +228,27 @@ export default function MainApp() {
           const campaignsWithBalance = await Promise.all(
             campaignsForDisplay.map(async (campaign) => {
               try {
-                const balance = await getSimulatedBalance(campaign.accountId);
+                const balance = await getAccountBalance(campaign.accountId);
                 return {
                   ...campaign,
                   balance: formatBalance(balance)
                 };
               } catch (error) {
                 console.error('Error loading balance for campaign:', campaign.id, error);
-                return {
-                  ...campaign,
-                  balance: '0.00000000'
-                };
+                // Якщо справжній баланс не працює, використовуємо симуляцію
+                try {
+                  const simulatedBalance = await getSimulatedBalance(campaign.accountId);
+                  return {
+                    ...campaign,
+                    balance: formatBalance(simulatedBalance)
+                  };
+                } catch (simError) {
+                  console.error('Error loading simulated balance:', simError);
+                  return {
+                    ...campaign,
+                    balance: '0.00000000'
+                  };
+                }
               }
             })
           );

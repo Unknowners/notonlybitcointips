@@ -12,14 +12,17 @@ type UserCanister =
            bool;
          }) query;
    debugPrincipal: (userId: UserId) -> (text) query;
+   getAccountBalance: (accountId: AccountId) -> (nat64) query;
    getAllCampaigns: () -> (vec Campaign) query;
    getAllUsers: () -> (vec User) query;
    getCampaign: (id: text) -> (opt Campaign) query;
+   getCampaignAccountId: (id: text) -> (opt AccountId) query;
    getCampaignSubaccount: (id: text) -> (opt blob) query;
    getPrincipal: () -> (principal) query;
    getUserCampaigns: (userId: UserId) -> (vec Campaign) query;
    userExists: () -> (bool) query;
    whoami: () -> (principal);
+   withdrawFunds: (request: TransferRequest) -> (bool);
  };
 type User = 
  record {
@@ -28,10 +31,17 @@ type User =
    id: UserId;
    name: text;
  };
+type TransferRequest = 
+ record {
+   amount: nat64;
+   campaignId: CampaignId;
+   targetAddress: text;
+ };
 type CampaignId = text;
 type Campaign = 
  record {
    acceptedTokens: vec text;
+   accountId: AccountId;
    createdAt: nat64;
    description: text;
    id: CampaignId;
@@ -39,4 +49,5 @@ type Campaign =
    owner: UserId;
    subaccount: blob;
  };
+type AccountId = text;
 service : () -> UserCanister

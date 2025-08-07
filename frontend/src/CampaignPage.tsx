@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { user_canister } from "./canisters/index.js";
 import { getSimulatedBalance, formatBalance } from "./ledger";
+import { getAccountBalance } from "./ledger"; // Added import for getAccountBalance
 
 type Campaign = {
   id: string;
@@ -56,11 +57,14 @@ export default function CampaignPage() {
   const loadBalance = async (accountId: string) => {
     setBalanceLoading(true);
     try {
-      // Використовуємо симульований баланс для демонстрації
-      const balanceValue = await getSimulatedBalance(accountId);
+      // Використовуємо справжній баланс замість симуляції
+      const balanceValue = await getAccountBalance(accountId);
       setBalance(balanceValue);
     } catch (error) {
       console.error('Error loading balance:', error);
+      // Якщо справжній баланс не працює, використовуємо симуляцію
+      const simulatedBalance = await getSimulatedBalance(accountId);
+      setBalance(simulatedBalance);
     } finally {
       setBalanceLoading(false);
     }

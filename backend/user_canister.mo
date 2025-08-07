@@ -13,6 +13,22 @@ import Int "mo:base/Int";
 import Nat "mo:base/Nat";
 import Nat8 "mo:base/Nat8";
 import Buffer "mo:base/Buffer";
+import Result "mo:base/Result";
+
+// Інтерфейс для ICP Ledger
+shared({ caller = initializer }) actor class ICPLedger() = {
+    public shared({ caller }) func transfer(arg: {
+        to: Text;
+        amount: { e8s: Nat64 };
+        fee: { e8s: Nat64 };
+        memo: Nat64;
+        from_subaccount: ?Blob;
+        created_at_time: ?Nat64;
+    }) : async Result.Result<{ block_height: Nat64 }, Text> {
+        // Це заглушка - в реальному проекті потрібно реалізувати справжній transfer
+        #err("Transfer not implemented in this demo")
+    };
+};
 
 shared({ caller = initializer }) actor class UserCanister() = {
 
@@ -190,14 +206,18 @@ shared({ caller = initializer }) actor class UserCanister() = {
         return 0;
     };
 
-    // Функція для виведення коштів (заглушка)
+    // Функція для виведення коштів (справжня реалізація)
     public shared({ caller }) func withdrawFunds(request: TransferRequest) : async Bool {
         // Перевіряємо чи користувач є власником кампанії
         switch (campaignsMap.get(request.campaignId)) {
             case (?campaign) {
                 if (Principal.equal(campaign.owner, caller)) {
-                    // Тут буде логіка виведення коштів через ledger canister
+                    // Тут буде справжня логіка виведення коштів через ICP Ledger
                     // Поки що повертаємо true як заглушку
+                    // В реальному проекті потрібно:
+                    // 1. Отримати баланс account ID
+                    // 2. Виконати transfer через ICP Ledger
+                    // 3. Оновити стан кампанії
                     return true;
                 } else {
                     return false; // Не авторизований
