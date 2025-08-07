@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { AuthClient } from '@dfinity/auth-client';
 import { createActor } from "./canisters/index.js";
+import { getSimulatedBalance, formatBalance } from "./ledger";
 
 // Типи для кампаній
 type Campaign = {
@@ -10,11 +11,13 @@ type Campaign = {
   description: string;
   owner: string;
   acceptedTokens: string[];
+  accountId: string;
   createdAt: bigint;
 };
 
 type CampaignDisplay = Omit<Campaign, 'createdAt'> & {
   createdAt: string;
+  balance?: string;
 };
 
 const TOKENS = ["ICP", "BTC", "ETH", "USDT"];
@@ -217,7 +220,27 @@ export default function MainApp() {
             ...campaign,
             createdAt: campaign.createdAt.toString()
           }));
-          setUserCampaigns(campaignsForDisplay);
+          
+          // Завантажуємо баланси для кожної кампанії
+          const campaignsWithBalance = await Promise.all(
+            campaignsForDisplay.map(async (campaign) => {
+              try {
+                const balance = await getSimulatedBalance(campaign.accountId);
+                return {
+                  ...campaign,
+                  balance: formatBalance(balance)
+                };
+              } catch (error) {
+                console.error('Error loading balance for campaign:', campaign.id, error);
+                return {
+                  ...campaign,
+                  balance: '0.00000000'
+                };
+              }
+            })
+          );
+          
+          setUserCampaigns(campaignsWithBalance);
           return;
         } catch (err) {
           console.error(`Error fetching campaigns (attempt ${i + 1}/${retries}):`, err);
@@ -382,13 +405,18 @@ export default function MainApp() {
             <h2 className="text-lg font-bold mb-2 text-gray-800">Your Campaigns</h2>
             <ul className="space-y-2">
               {userCampaigns.map((c, i) => (
-                <li key={i} className="bg-gray-100 rounded-lg px-4 py-2 flex justify-between items-center">
-                  <div>
+                <li key={i} className="bg-gray-100 rounded-lg px-4 py-3 flex justify-between items-center">
+                  <div className="flex-1">
                     <div className="font-semibold text-gray-900">{c.name}</div>
                     <div className="text-gray-500 text-sm">{c.description}</div>
                     <div className="text-xs text-gray-400">Created: {new Date(Number(c.createdAt) / 1_000_000).toLocaleString()}</div>
+                    {c.balance && (
+                      <div className="text-sm font-medium text-green-600 mt-1">
+                        Balance: {c.balance} ICP
+                      </div>
+                    )}
                   </div>
-                  <a href={`/donate/${c.id}`} className="text-blue-600 hover:underline font-bold">Go to</a>
+                  <a href={`/donate/${c.id}`} className="text-blue-600 hover:underline font-bold ml-2">View</a>
                 </li>
               ))}
             </ul>

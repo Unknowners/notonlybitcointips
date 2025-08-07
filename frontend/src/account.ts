@@ -21,6 +21,44 @@ function crc32(buf: Uint8Array): Uint8Array {
   return out;
 }
 
+// Функція для генерації account ID на основі user principal + campaign ID
+export async function generateAccountId(userPrincipal: string, campaignId: string): Promise<string> {
+  // Конвертуємо user principal в bytes
+  const userPrincipalObj = Principal.fromText(userPrincipal);
+  const userBytes = userPrincipalObj.toUint8Array();
+  
+  // Конвертуємо campaign ID в bytes (32-byte subaccount)
+  const campaignBytes = new TextEncoder().encode(campaignId);
+  const paddedCampaignBytes = new Uint8Array(32);
+  paddedCampaignBytes.set(campaignBytes.slice(0, 32));
+  
+  // Об'єднуємо user principal + campaign ID
+  const combinedBytes = new Uint8Array(userBytes.length + paddedCampaignBytes.length);
+  combinedBytes.set(userBytes, 0);
+  combinedBytes.set(paddedCampaignBytes, userBytes.length);
+  
+  // Хешуємо комбінацію
+  const hash = await crypto.subtle.digest('SHA-256', combinedBytes);
+  const hashBytes = new Uint8Array(hash);
+  
+  // Беремо перші 28 байт для account ID
+  const accountBytes = hashBytes.slice(0, 28);
+  
+  // Генеруємо CRC32 checksum
+  const checksum = crc32(accountBytes);
+  
+  // Об'єднуємо checksum + account bytes
+  const result = new Uint8Array(checksum.length + accountBytes.length);
+  result.set(checksum, 0);
+  result.set(accountBytes, checksum.length);
+  
+  // Конвертуємо в hex string
+  return Array.from(result)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+// Оригінальна функція для сумісності
 export async function accountIdentifier(principal: string, sub: Uint8Array): Promise<string> {
   const padding = new Uint8Array([0x0a, ...new TextEncoder().encode('account-id')]);
   const principalBytes = Principal.fromText(principal).toUint8Array();
