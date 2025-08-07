@@ -15,25 +15,15 @@ export async function getAccountBalance(accountId: string): Promise<bigint> {
   try {
     const host = (isMainnet || isICPNinja) ? 'https://ic0.app' : 'http://localhost:4943';
     
-    // Використовуємо простий HTTP запит до ledger
-    const response = await fetch(`${host}/api/v2/canister/${ledgerCanisterId}/query`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/cbor',
-      },
-      body: new Uint8Array([
-        // Простий запит для account_balance_dfx
-        // Це спрощена версія - в реальному проекті потрібно використовувати правильний Candid interface
-      ])
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    // Повертаємо 0 як заглушку - в реальному проекті потрібно парсити відповідь
     console.log('Getting balance for account:', accountId);
-    return 0n;
+    console.log('Using host:', host);
+    
+    // Для демонстрації повертаємо симульований баланс
+    // В реальному проекті тут буде правильний HTTP запит до ledger
+    const simulatedBalance = await getSimulatedBalance(accountId);
+    console.log('Simulated balance:', simulatedBalance);
+    return simulatedBalance;
+    
   } catch (error) {
     console.error('Error getting account balance:', error);
     return 0n;

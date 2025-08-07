@@ -62,6 +62,10 @@ export default function CampaignPage() {
           
           if (accountIdData) {
             setAccountId(accountIdData);
+          } else {
+            // Якщо account ID не знайдено, генеруємо fallback
+            console.log('Account ID not found, generating fallback');
+            setAccountId(`account_${id}`);
           }
         } catch (accountError) {
           console.error('Error getting account ID:', accountError);
@@ -74,7 +78,14 @@ export default function CampaignPage() {
           const currentUser = await user_canister.whoami();
           console.log('Current user:', currentUser);
           console.log('Campaign owner:', campaignData.owner);
-          setIsOwner(currentUser === campaignData.owner);
+          
+          // Перевіряємо чи owner існує та чи користувач авторизований
+          if (campaignData.owner && currentUser) {
+            setIsOwner(currentUser === campaignData.owner);
+          } else {
+            console.log('Owner or current user not available');
+            setIsOwner(false);
+          }
         } catch (authError) {
           console.log('User not authenticated or error getting current user:', authError);
           setIsOwner(false);
@@ -168,7 +179,20 @@ export default function CampaignPage() {
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-xl">Loading...</div>;
-  if (!campaign) return <div className="min-h-screen flex items-center justify-center text-xl text-red-500">Campaign not found</div>;
+  if (!campaign) return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-gray-900 flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white/90 rounded-3xl shadow-2xl p-10 backdrop-blur-md text-center">
+        <h1 className="text-2xl font-bold text-red-600 mb-4">Campaign Not Found</h1>
+        <p className="text-gray-700 mb-6">The campaign you're looking for doesn't exist or has been removed.</p>
+        <button
+          onClick={() => navigate("/")}
+          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition-all transform hover:scale-105"
+        >
+          Back to Dashboard
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-gray-900 flex flex-col items-center justify-center p-4">
