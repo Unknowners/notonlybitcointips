@@ -15,21 +15,6 @@ import Nat8 "mo:base/Nat8";
 import Buffer "mo:base/Buffer";
 import Result "mo:base/Result";
 
-// Інтерфейс для ICP Ledger
-shared({ caller = initializer }) actor class ICPLedger() = {
-    public shared({ caller }) func transfer(arg: {
-        to: Text;
-        amount: { e8s: Nat64 };
-        fee: { e8s: Nat64 };
-        memo: Nat64;
-        from_subaccount: ?Blob;
-        created_at_time: ?Nat64;
-    }) : async Result.Result<{ block_height: Nat64 }, Text> {
-        // Це заглушка - в реальному проекті потрібно реалізувати справжній transfer
-        #err("Transfer not implemented in this demo")
-    };
-};
-
 shared({ caller = initializer }) actor class UserCanister() = {
 
     // Types

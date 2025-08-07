@@ -32,6 +32,7 @@ export async function getAccountBalance(accountId: string): Promise<bigint> {
     }
 
     // Повертаємо 0 як заглушку - в реальному проекті потрібно парсити відповідь
+    console.log('Getting balance for account:', accountId);
     return 0n;
   } catch (error) {
     console.error('Error getting account balance:', error);
@@ -82,6 +83,13 @@ export async function transferICP(
     }
 
     // Повертаємо успіх як заглушку
+    console.log('Transferring', amount.toString(), 'ICP to', to);
+    if (fromSubaccount) {
+      console.log('Using subaccount:', fromSubaccount);
+    }
+    if (identity) {
+      console.log('Using identity for transfer');
+    }
     return { success: true, blockHeight: 123456n };
   } catch (error) {
     console.error('Error transferring ICP:', error);
