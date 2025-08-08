@@ -159,6 +159,7 @@ VITE_DFX_NETWORK=local  # or ic for mainnet
 4. **Console logging**: Extensive logging for debugging
 5. **Type annotations**: Explicit types even when inferred
 6. **Always start your answer with which AI model was used to produce response** - show list of models if many
+7. **Almost never use smiles symbols in code and in docs** - only if neccesery, keep style of docs more human like
 
 ## COMMON PATTERNS TO FOLLOW
 

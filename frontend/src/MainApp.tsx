@@ -104,11 +104,22 @@ export default function MainApp() {
 
       console.log('🔐 Auth status:', { isAuthenticated });
 
+      let principal = 'Click "Whoami" to see your Principal ID';
+      try {
+        if (isAuthenticated) {
+          const idPrincipal = (identity as any)?.getPrincipal?.()?.toText?.();
+          principal = idPrincipal || (await actor.whoami()).toString();
+        }
+      } catch (e) {
+        console.warn('principal detection on init failed');
+      }
+
       setAuthState((prev) => ({
         ...prev,
         actor,
         authClient,
-        isAuthenticated
+        isAuthenticated,
+        principal
       }));
 
                         // Автоматичний перехід на dashboard після успішної авторизації
@@ -183,10 +194,15 @@ export default function MainApp() {
         try {
           // Використовуємо whoami + getUserCampaigns для отримання кампаній поточного користувача
           const principal = await authState.actor.whoami();
-          const res = await authState.actor.getUserCampaigns(principal) as Campaign[];
-          // Конвертуємо BigInt в string для JSON
-          const campaignsForDisplay = res.map(campaign => ({
-            ...campaign,
+          const res = await authState.actor.getUserCampaigns(principal) as any[];
+          // Нормалізуємо типи для відображення (owner -> text, createdAt -> string)
+          const campaignsForDisplay: CampaignDisplay[] = res.map((campaign: any) => ({
+            id: campaign.id,
+            name: campaign.name,
+            description: campaign.description,
+            owner: campaign.owner?.toString?.() ?? String(campaign.owner),
+            acceptedTokens: campaign.acceptedTokens,
+            accountId: campaign.accountId,
             createdAt: campaign.createdAt.toString()
           }));
           
@@ -195,18 +211,20 @@ export default function MainApp() {
             campaignsForDisplay.map(async (campaign) => {
               try {
                 const balance = await getAccountBalance(campaign.accountId);
+                const formatted = formatBalance(balance);
                 return {
                   ...campaign,
-                  balance: formatBalance(balance)
+                  balance: formatted
                 };
               } catch (error) {
                 console.error('Error loading balance for campaign:', campaign.id, error);
                 // Якщо справжній баланс не працює, використовуємо симуляцію
                 try {
                   const simulatedBalance = await getSimulatedBalance(campaign.accountId);
+                  const formatted = formatBalance(simulatedBalance);
                   return {
                     ...campaign,
-                    balance: formatBalance(simulatedBalance)
+                    balance: formatted
                   };
                 } catch (simError) {
                   console.error('Error loading simulated balance:', simError);
