@@ -41,6 +41,12 @@ export default function CampaignPage() {
       console.log('Campaign data received:', campaignData);
       
       if (campaignData) {
+        console.log('🔍 Повний об\'єкт кампанії з backend:', campaignData);
+        console.log('🔍 Всі поля кампанії:', Object.keys(campaignData));
+        console.log('🔍 Тип campaignData:', typeof campaignData);
+        console.log('🔍 accountId поле:', campaignData.accountId);
+        console.log('🔍 Тип accountId:', typeof campaignData.accountId);
+        
         setCampaign(campaignData);
         console.log('Using account ID from campaign:', campaignData.accountId);
         
