@@ -224,6 +224,15 @@ This is a hackathon project built for ICP ecosystem, prioritizing rapid developm
 4. **Version is automatically displayed in footer** from VERSION file
 5. **Never manually edit version in MainApp.tsx** - use update script
 
+### Git Tag Policy
+- **When**: create tags only on explicit user request after a stable commit on `main`
+- **Format**: annotated tags, `vX.Y.Z`
+- **Source**: tag only from `main`, and only after `VERSION` is updated and pushed
+- **Command**:
+  - Create: `git tag -a vX.Y.Z -m "vX.Y.Z: stable snapshot" && git push origin vX.Y.Z`
+  - Restore: `git switch -c restore/vX.Y.Z vX.Y.Z`
+- **Note**: tags do not trigger mainnet deploys; ICP Ninja deploys via "Run"
+
 ### Example Commit Messages with Versions
 ```
 v0.6.0: feat: implement account ID generation
