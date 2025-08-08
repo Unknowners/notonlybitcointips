@@ -206,4 +206,35 @@ try {
 - Public API for balance verification
 - Mobile responsive improvements
 
-This is a hackathon project built for ICP ecosystem, prioritizing rapid development while maintaining security and proper IC integration patterns. 
+This is a hackathon project built for ICP ecosystem, prioritizing rapid development while maintaining security and proper IC integration patterns.
+
+## VERSION MANAGEMENT
+
+### Semantic Versioning
+- **MAJOR.MINOR.PATCH** format (e.g., 0.6.0)
+- **MAJOR**: Breaking changes to API or core architecture
+- **MINOR**: New features, significant improvements, or non-breaking changes
+- **PATCH**: Bug fixes, minor improvements, documentation updates
+
+### Version Update Rules
+1. **Always update VERSION file** when making significant changes
+2. **Update after major fixes** that affect core functionality
+3. **Coordinate version with git tags** for releases
+4. **Document changes** in commit messages with version bumps
+
+### Current Version Guidelines
+- **0.x.x**: Pre-release/development phase
+- **1.x.x**: First stable release with complete wallet system
+- **Version in files**: `/VERSION` - single line with current version
+
+### When to Bump Version
+- ✅ **MINOR**: New features (wallet system fixes, new API methods)
+- ✅ **PATCH**: Bug fixes, UI improvements, documentation
+- ✅ **MAJOR**: Breaking changes to Candid interface, architecture changes
+
+### Example Commit Messages with Versions
+```
+feat: implement account ID generation v0.6.0
+fix: resolve wallet display issues v0.5.3  
+docs: update deployment guide v0.5.2
+``` 

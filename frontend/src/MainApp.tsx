@@ -584,7 +584,7 @@ export default function MainApp() {
       <div className="mt-8 text-gray-400 text-xs text-center select-none">
         &copy; {new Date().getFullYear()} Not Only Bitcoin Tips. Powered by ICP Hackathon.
         <br />
-        Version 0.5.2
+        Version 0.6.0
       </div>
     </div>
   );
