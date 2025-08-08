@@ -194,7 +194,10 @@ export default function CampaignPage() {
     try {
       const identity = authClientRef.current.getIdentity();
       const owner = identity.getPrincipal();
-      const bal = await getCkBtcBalance(identity, owner);
+      const sub = new TextEncoder().encode(campaign.id);
+      const sub32 = new Uint8Array(32); sub32.set(sub.slice(0, 32));
+      console.log('[ckBTC] Refresh ckBTC ICRC balance for owner/subaccount...');
+      const bal = await getCkBtcBalance(identity, owner, sub32);
       setCkbtcBalance(bal);
     } catch (e) {
       console.warn('ckBTC balance error', e);
@@ -206,7 +209,10 @@ export default function CampaignPage() {
   const pollCkBtcCredit = async () => {
     if (!authClientRef.current) return;
     const identity = authClientRef.current.getIdentity();
-    await pollUpdateBalance(identity);
+    const sub = new TextEncoder().encode(campaign?.id || '');
+    const sub32 = new Uint8Array(32); sub32.set(sub.slice(0, 32));
+    console.log('[ckBTC] Polling minter update_balance for owner/subaccount...');
+    await pollUpdateBalance(identity, identity.getPrincipal(), sub32);
     await refreshCkBtcBalance();
   };
 
@@ -217,6 +223,7 @@ export default function CampaignPage() {
       const amount = parseFloat(ckbtcWithdrawAmount || '0');
       if (isNaN(amount) || amount <= 0) return;
       const e8s = BigInt(Math.floor(amount * 100_000_000));
+      console.log('[ckBTC] Estimating withdrawal fee...');
       const fees = await estimateWithdrawFee(identity, ckbtcWithdrawAddr, e8s);
       setCkbtcFeeInfo(fees);
     } catch (e: any) {
@@ -234,6 +241,7 @@ export default function CampaignPage() {
       const amount = parseFloat(ckbtcWithdrawAmount || '0');
       if (isNaN(amount) || amount <= 0) throw new Error('Invalid amount');
       const e8s = BigInt(Math.floor(amount * 100_000_000));
+      console.log('[ckBTC] Submitting withdrawal...');
       const res = await withdrawCkBtc(identity, ckbtcWithdrawAddr, e8s);
       if (res.ok !== undefined) {
         setCkbtcWithdrawOk(`Submitted at block ${res.ok.toString()}`);
@@ -286,6 +294,7 @@ export default function CampaignPage() {
     if (isFetchingBalanceRef.current) return;
     isFetchingBalanceRef.current = true;
     try {
+      console.log('[ICP] Updating ICP balance...');
       const balanceValue = await getAccountBalance(accountId);
       if (balanceValue !== lastBalanceRef.current) {
         lastBalanceRef.current = balanceValue;
@@ -486,7 +495,7 @@ export default function CampaignPage() {
             <div className="space-y-2">
               <button
                 className="px-3 py-2 bg-gray-800 text-white rounded-md text-sm"
-                onClick={loadCkBtcAddress}
+                onClick={async () => { console.log('[ckBTC] Getting deposit address...'); await loadCkBtcAddress(); }}
                 disabled={ckbtcLoading}
               >
                 {ckbtcLoading ? 'Loading...' : 'Get BTC Deposit Address'}
