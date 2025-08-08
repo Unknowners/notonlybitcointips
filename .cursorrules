@@ -219,7 +219,7 @@ This is a hackathon project built for ICP ecosystem, prioritizing rapid developm
 ### Version Update Rules
 1. **Always update VERSION file** when making significant changes
 2. **Update after major fixes** that affect core functionality
-3. **Coordinate version with git tags** for releases
+3. **Start commit messages with version number** for releases
 4. **Document changes** in commit messages with version bumps
 
 ### Current Version Guidelines
@@ -234,7 +234,7 @@ This is a hackathon project built for ICP ecosystem, prioritizing rapid developm
 
 ### Example Commit Messages with Versions
 ```
-feat: implement account ID generation v0.6.0
-fix: resolve wallet display issues v0.5.3  
-docs: update deployment guide v0.5.2
+v0.6.0: feat: implement account ID generation
+v0.5.3: fix: resolve wallet display issues  
+v0.5.2: docs: update deployment guide
 ``` 
