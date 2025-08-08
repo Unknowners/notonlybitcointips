@@ -6,6 +6,7 @@ import { getSimulatedBalance, formatBalance } from "./ledger";
 import { getAccountBalance } from "./ledger";
 import { icpToE8s, transferICP } from "./ledger";
 import { AuthClient } from '@dfinity/auth-client';
+import { getCkBtcDepositAddress } from './ckbtc';
 import type { Campaign } from "./canisters/user_canister/user_canister.did.d.ts";
 
 export default function CampaignPage() {
@@ -37,6 +38,11 @@ export default function CampaignPage() {
   const [donateError, setDonateError] = useState<string | null>(null);
   const [donateSuccess, setDonateSuccess] = useState<{ blockHeight?: bigint } | null>(null);
   const authClientRef = useRef<AuthClient | null>(null);
+
+  // ckBTC state
+  const [ckbtcAddress, setCkbtcAddress] = useState<string | null>(null);
+  const [ckbtcLoading, setCkbtcLoading] = useState(false);
+  const [ckbtcError, setCkbtcError] = useState<string | null>(null);
 
   // Завантажуємо кампанію при зміні ID
   useEffect(() => {
@@ -155,6 +161,21 @@ export default function CampaignPage() {
       });
     } catch (e) {
       console.error('Login failed', e);
+    }
+  };
+
+  const loadCkBtcAddress = async () => {
+    if (!authClientRef.current || !campaign) return;
+    setCkbtcError(null);
+    setCkbtcLoading(true);
+    try {
+      const identity = authClientRef.current.getIdentity();
+      const address = await getCkBtcDepositAddress(identity);
+      setCkbtcAddress(address);
+    } catch (e: any) {
+      setCkbtcError(e?.message || String(e));
+    } finally {
+      setCkbtcLoading(false);
     }
   };
 
@@ -383,6 +404,31 @@ export default function CampaignPage() {
                 {donateLoading ? 'Sending...' : 'Send with II'}
               </button>
             </form>
+          )}
+        </div>
+
+        {/* ckBTC deposit */}
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+          <h3 className="font-semibold text-gray-900 mb-2">ckBTC Deposit</h3>
+          {!isAuthenticated ? (
+            <p className="text-sm text-gray-600">Sign in above to see a BTC deposit address (minter)</p>
+          ) : (
+            <div className="space-y-2">
+              <button
+                className="px-3 py-2 bg-gray-800 text-white rounded-md text-sm"
+                onClick={loadCkBtcAddress}
+                disabled={ckbtcLoading}
+              >
+                {ckbtcLoading ? 'Loading...' : 'Get BTC Deposit Address'}
+              </button>
+              {ckbtcError && <div className="text-red-600 text-sm">{ckbtcError}</div>}
+              {ckbtcAddress && (
+                <div className="bg-white p-2 rounded border font-mono text-sm break-all">{ckbtcAddress}</div>
+              )}
+              <p className="text-xs text-gray-500">
+                Send BTC from your exchange/wallet to this address. After confirmations, ckBTC will appear on the campaign balance.
+              </p>
+            </div>
           )}
         </div>
 
