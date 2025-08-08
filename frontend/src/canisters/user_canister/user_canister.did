@@ -1,6 +1,7 @@
 type UserId = principal;
 type UserCanister = 
  service {
+   clearCampaigns: () -> ();
    clearUsers: () -> ();
    createCampaign: (name: text, description: text, acceptedTokens:
     vec text) -> (text);

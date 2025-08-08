@@ -26,6 +26,7 @@ export interface User {
   'email' : [] | [string],
 }
 export interface UserCanister {
+  'clearCampaigns' : ActorMethod<[], undefined>,
   'clearUsers' : ActorMethod<[], undefined>,
   'createCampaign' : ActorMethod<[string, string, Array<string>], string>,
   'createUser' : ActorMethod<[string, [] | [string]], boolean>,
