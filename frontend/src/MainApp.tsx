@@ -315,6 +315,24 @@ export default function MainApp() {
     setLoading(false);
   };
 
+  const clearCampaigns = async () => {
+    if (!authState.actor) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      await authState.actor.clearCampaigns();
+      console.log('✅ Campaigns cleared');
+      setUserCampaigns([]);
+    } catch (error) {
+      console.error('❌ Error clearing campaigns:', error);
+      setError('Failed to clear campaigns. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // --- UI ---
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-gray-900 flex flex-col items-center justify-center p-4">
@@ -388,7 +406,18 @@ export default function MainApp() {
         {/* Список кампаній користувача */}
         {step === "dashboard" && (
           <div className="mb-8">
-            <h2 className="text-lg font-bold mb-2 text-gray-800">Your Campaigns</h2>
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-lg font-bold text-gray-800">Your Campaigns</h2>
+              {userCampaigns.length > 0 && (
+                <button
+                  onClick={clearCampaigns}
+                  className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition"
+                  disabled={loading}
+                >
+                  {loading ? "Clearing..." : "Clear All"}
+                </button>
+              )}
+            </div>
             <ul className="space-y-2">
               {userCampaigns.map((c, i) => (
                 <li key={i} className="bg-gray-100 rounded-lg px-4 py-3 flex justify-between items-center">
@@ -557,7 +586,7 @@ export default function MainApp() {
       <div className="mt-8 text-gray-400 text-xs text-center select-none">
         &copy; {new Date().getFullYear()} Not Only Bitcoin Tips. Powered by ICP Hackathon.
         <br />
-        Version 0.6.4
+        Version 0.6.5
       </div>
     </div>
   );

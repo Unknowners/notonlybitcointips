@@ -7,11 +7,11 @@ const path = require('path');
 console.log('🔍 Pre-commit hook: Checking version consistency...');
 
 // Перевіряємо чи VERSION файл змінився
-const versionFile = path.join(__dirname, '..', 'VERSION');
+const versionFile = path.join(__dirname, '..', '..', 'VERSION');
 const currentVersion = fs.readFileSync(versionFile, 'utf8').trim();
 
 // Перевіряємо версію в MainApp.tsx
-const mainAppFile = path.join(__dirname, '..', 'frontend/src/MainApp.tsx');
+const mainAppFile = path.join(__dirname, '..', '..', 'frontend/src/MainApp.tsx');
 const mainAppContent = fs.readFileSync(mainAppFile, 'utf8');
 const versionInMainApp = mainAppContent.match(/Version (\d+\.\d+\.\d+)/);
 
