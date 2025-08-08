@@ -1,5 +1,5 @@
 import { Actor, HttpAgent } from "@dfinity/agent";
-import { idlFactory } from './user_canister.did.js';
+import { idlFactory } from './user_canister/user_canister.did.js';
 
 // Determine canister ID based on environment
 const isLocal = window.location.hostname.includes('localhost') || 
