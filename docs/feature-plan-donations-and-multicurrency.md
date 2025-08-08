@@ -100,6 +100,21 @@
 
 ---
 
+## 4) Тестування та автоматизація (Playwright + API tests + CI/hooks)
+- E2E (Playwright, локальна мережа, ICP‑only на старті):
+  - Запуск dev‑сервера автівно через `webServer` у `playwright.config.ts`.
+  - `storageState` для Internet Identity (одноразовий логін, збереження сесії) — додати після базових тестів.
+  - Базові тести: smoke (title, версія), неавтентифікований вигляд, створення кампанії (UI валідації), умовний рендер ckBTC секції.
+- API tests (unit/integration для `user_canister`):
+  - Endpoints: `whoami`, `createUser`, `userExists`, `createCampaign`, `getUserCampaigns`, `getCampaign`, `getCampaignAccountId`, `getCampaignSubaccount`, `deleteCampaign`, `withdrawFunds`.
+  - Сценарії: авторизація → створення юзера → створення кампанії → перевірки атрибутів; видалення (власник/не власник; баланс 0/не 0 — коли зʼявиться перевірка); умовний рендер токенів.
+  - Технічно: Node‑тести з `@dfinity/agent` або `dfx canister call` в `tests/api`, із моками там, де потрібні зовнішні сервіси.
+- Автоматизація запуску:
+  - Локально: `npm run test:e2e` (frontend).
+  - Git hooks/CI: додати pre‑push або CI job, що виконує build + e2e + API tests (без взаємодії з mainnet).
+
+---
+
 ## Організаційні домовленості
 - Документація/правила додані в `.cursorrules` після релізу.
 - Теги (`vX.Y.Z`) створюються ЛИШЕ за явною командою користувача; релізні точки позначаємо також `release/`‑гілками при потребі.
