@@ -1,4 +1,4 @@
-// Функції для роботи з ICP Ledger через HTTP запити
+// Функції для роботи з ICP Ledger через агент @dfinity/agent
 
 // Конфігурація мережі
 const isMainnet = window.location.hostname.includes('ic0.app') || 
@@ -9,6 +9,9 @@ const isMainnet = window.location.hostname.includes('ic0.app') ||
 const isICPNinja = window.location.hostname.includes('ninja.ic0.app');
 
 const ledgerCanisterId = "ryjl3-tyaaa-aaaaa-aaaba-cai"; // ICP Ledger canister ID
+import { Actor, HttpAgent } from '@dfinity/agent';
+// @ts-ignore - JS IDL factory
+import { idlFactory as ledgerIdl } from './canisters/ledger.did.js';
 
 // Функція для отримання балансу account через HTTP запит
 export async function getAccountBalance(accountId: string): Promise<bigint> {
@@ -32,53 +35,21 @@ export async function getAccountBalance(accountId: string): Promise<bigint> {
 // Функція для правильного HTTP запиту до ICP Ledger
 export async function getRealAccountBalance(accountId: string): Promise<bigint> {
   try {
-    const host = (isMainnet || isICPNinja) ? 'https://ic0.app' : 'http://localhost:4943';
-    
-    // Правильний CBOR запит для account_balance_dfx
-    // Формат: { "account": "account_id" }
-    const requestBody = new Uint8Array([
-      // CBOR header для map з 1 елементом
-      0xa1,
-      // Key: "account" (text)
-      0x67, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74,
-      // Value: account ID (text)
-      0x67, ...new TextEncoder().encode(accountId)
-    ]);
-    
-    console.log('Sending CBOR request to ledger:', requestBody);
-    
-    const response = await fetch(`${host}/api/v2/canister/${ledgerCanisterId}/query`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/cbor',
-      },
-      body: requestBody
+    const host = (isMainnet || isICPNinja) ? 'https://ic0.app' : 'http://127.0.0.1:4943';
+    const agent = new HttpAgent({ host });
+    if (!isMainnet && !isICPNinja) {
+      await agent.fetchRootKey();
+    }
+    const ledger = Actor.createActor(ledgerIdl, {
+      agent,
+      canisterId: ledgerCanisterId,
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    // Парсимо відповідь
-    const responseData = await response.arrayBuffer();
-    console.log('Response data:', new Uint8Array(responseData));
-    
-    // Парсимо CBOR відповідь
-    // Формат відповіді: { "e8s": balance }
-    const responseArray = new Uint8Array(responseData);
-    
-    // Простий парсинг - шукаємо e8s значення
-    // В реальному проекті використовуйте CBOR парсер
-    let balance = 0n;
-    
-    // Спрощений парсинг для демонстрації
-    if (responseArray.length > 0) {
-      // Якщо відповідь успішна, повертаємо баланс
-      // В реальному проекті потрібно правильно парсити CBOR
-      balance = 0n; // Поки що повертаємо 0
-    }
-    
-    return balance;
+    console.log('Querying ledger account_balance_dfx for:', accountId, 'via', host);
+    const res = await (ledger as any).account_balance_dfx({ account: accountId });
+    // res: { e8s: nat64 }
+    const e8s = BigInt(res?.e8s ?? 0);
+    return e8s;
   } catch (error) {
     console.error('Error getting real account balance:', error);
     return 0n;
