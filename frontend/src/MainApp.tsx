@@ -111,48 +111,21 @@ export default function MainApp() {
         isAuthenticated
       }));
 
-                        // Якщо користувач авторизований, перевіряємо чи він вже існує
-                  if (isAuthenticated) {
-                    console.log('✅ User is authenticated, checking if user exists...');
-                    
-                    // Функція для перевірки існування користувача з повторними спробами
-                    // Спрощена логіка: спробуємо отримати кампанії користувача
-                    // Якщо це не викликає помилку, значить користувач існує
-                    let userExists = false;
-                    try {
-                      console.log('🔍 Checking user existence via getUserCampaigns...');
-                      const principal = await actor.whoami();
-                      await actor.getUserCampaigns(principal);
-                      console.log('✅ User exists - getUserCampaigns succeeded');
-                      userExists = true;
-                    } catch (error) {
-                      console.log('❌ getUserCampaigns failed:', error);
-                      // Якщо getUserCampaigns не працює, спробуємо createUser
-                      try {
-                        console.log('🔍 Trying createUser as fallback...');
-                        await actor.createUser("", []);
-                        console.log('✅ createUser succeeded - user exists');
-                        userExists = true;
-                      } catch (createUserError) {
-                        console.log('❌ createUser also failed:', createUserError);
-                        // Якщо обидва методи не працюють, припускаємо що користувач не існує
-                        userExists = false;
-                      }
-                    }
-                    
-                                          if (userExists) {
-                        console.log('👤 User exists, going to dashboard');
-                        // Користувач вже існує, переходимо до dashboard
-                        setStep("dashboard");
-                        // fetchUserCampaigns буде викликано автоматично через useEffect
-                      } else {
-                      console.log('🆕 User does not exist, showing registration form');
-                      // Користувач не існує, показуємо форму реєстрації
-                      setStep("register");
-                    }
-                  } else {
-                    console.log('❌ User is not authenticated');
-                  }
+                        // Автоматичний логін тільки для dev режиму
+                        if (isAuthenticated) {
+                          console.log('✅ User is authenticated');
+                          
+                          // Тільки для dev режиму - автоматично переходимо на dashboard
+                          if (import.meta.env.DEV) {
+                            console.log('🛠️ DEV mode: Auto-login to dashboard');
+                            setStep("dashboard");
+                          } else {
+                            console.log('🌐 PROD mode: User must manually login');
+                            // На продакшені залишаємо користувача на auth сторінці
+                          }
+                        } else {
+                          console.log('❌ User is not authenticated');
+                        }
     } catch (error) {
       console.error('❌ Error updating actor:', error);
     }
@@ -584,7 +557,7 @@ export default function MainApp() {
       <div className="mt-8 text-gray-400 text-xs text-center select-none">
         &copy; {new Date().getFullYear()} Not Only Bitcoin Tips. Powered by ICP Hackathon.
         <br />
-        Version 0.6.3
+        Version 0.6.4
       </div>
     </div>
   );

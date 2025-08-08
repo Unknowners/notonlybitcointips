@@ -217,7 +217,7 @@ This is a hackathon project built for ICP ecosystem, prioritizing rapid developm
 - **PATCH**: Bug fixes, minor improvements, documentation updates
 
 ### Version Update Rules
-1. **VERSION file is the single source of truth** - always update it first
+1. **VERSION file is the single source of truth** - always update it before making git commit
 2. **Run `npm run update-version`** to sync version across all files
 3. **Start commit messages with version number** (e.g., `v0.6.2:`)
 4. **Version is automatically displayed in footer** from VERSION file
