@@ -15,6 +15,7 @@ type Campaign = record {
   owner: UserId;
   acceptedTokens: vec text;
   subaccount: blob;
+  accountId: text;
   createdAt: int;
 };
 

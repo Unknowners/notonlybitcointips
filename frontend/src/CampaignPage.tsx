@@ -3,17 +3,8 @@ import { QRCodeSVG } from "qrcode.react";
 import { useParams, useNavigate } from "react-router-dom";
 import { user_canister } from "./canisters/index.js";
 import { getSimulatedBalance, formatBalance } from "./ledger";
-import { getAccountBalance } from "./ledger"; // Added import for getAccountBalance
-
-type Campaign = {
-  id: string;
-  name: string;
-  description: string;
-  owner: string;
-  acceptedTokens: string[];
-  accountId: string;
-  createdAt: bigint;
-};
+import { getAccountBalance } from "./ledger";
+import type { Campaign } from "./canisters/user_canister/user_canister.did.d.ts";
 
 export default function CampaignPage() {
   const { id } = useParams<{ id: string }>();
@@ -53,19 +44,9 @@ export default function CampaignPage() {
         setCampaign(campaignData);
         console.log('Using account ID from campaign:', campaignData.accountId);
         
-        // Fallback: якщо accountId undefined, отримуємо його окремо
+        // Перевіряємо чи account ID існує в кампанії
         if (!campaignData.accountId) {
-          console.log('Account ID not found in campaign, fetching separately...');
-          try {
-            const separateAccountId = await user_canister.getCampaignAccountId(id);
-            console.log('Separate account ID:', separateAccountId);
-            if (separateAccountId) {
-              // Оновлюємо кампанію з account ID
-              setCampaign({...campaignData, accountId: separateAccountId});
-            }
-          } catch (accountError) {
-            console.error('Error getting separate account ID:', accountError);
-          }
+          console.error('Account ID не знайдено в кампанії! Перевірте backend генерацію.');
         }
         
         // Перевіряємо чи поточний користувач є власником
@@ -76,7 +57,11 @@ export default function CampaignPage() {
           
           // Перевіряємо чи owner існує та чи користувач авторизований
           if (campaignData.owner && currentUser) {
-            setIsOwner(currentUser === campaignData.owner);
+            // Конвертуємо Principal в string для порівняння
+            const ownerString = campaignData.owner.toString();
+            const currentUserString = currentUser.toString();
+            console.log('Comparing owner:', ownerString, 'with current user:', currentUserString);
+            setIsOwner(currentUserString === ownerString);
           } else {
             console.log('Owner or current user not available');
             setIsOwner(false);
