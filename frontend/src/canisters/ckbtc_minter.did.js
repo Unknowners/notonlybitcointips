@@ -12,7 +12,7 @@ export const idlFactory = ({ IDL }) => {
   const EstimateArgs = RetrieveBtcArgs;
   const FeeInfo = IDL.Record({ minter_fee: IDL.Nat64, bitcoin_fee: IDL.Nat64, total_fee: IDL.Nat64 });
   return IDL.Service({
-    get_btc_address: IDL.Func([GetAddressArgs], [IDL.Text], ['query']),
+    get_btc_address: IDL.Func([GetAddressArgs], [IDL.Text], []),
     update_balance: IDL.Func([UpdateBalanceArgs], [UpdateBalanceResult], []),
     retrieve_btc: IDL.Func([RetrieveBtcArgs], [RetrieveBtcResult], []),
     estimate_withdrawal_fee: IDL.Func([EstimateArgs], [FeeInfo], ['query'])
