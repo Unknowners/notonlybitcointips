@@ -516,7 +516,7 @@ export default function MainApp() {
               <label className="block text-gray-700 font-semibold mb-2">Currencies for Donations <span className="text-red-500">*</span></label>
               <div className="flex flex-wrap gap-3">
                 {TOKENS.map(token => {
-                  const isAvailable = token === "ICP";
+                  const isAvailable = token === "ICP" || token === "BTC"; // Увімкнено ckBTC
                   const isSelected = campaign.tokens.includes(token);
                   
                   return (
@@ -601,7 +601,7 @@ export default function MainApp() {
       <div className="mt-8 text-gray-400 text-xs text-center select-none">
         &copy; {new Date().getFullYear()} Not Only Bitcoin Tips. Powered by ICP Hackathon.
         <br />
-        Version 0.7.16
+        Version 0.7.17
       </div>
     </div>
   );
