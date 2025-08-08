@@ -79,40 +79,54 @@ export async function transferICP(
   to: string,
   amount: bigint,
   fromSubaccount?: Uint8Array,
-  identity?: any
+  identity?: any,
+  memo?: bigint
 ): Promise<{ success: boolean; blockHeight?: bigint; error?: string }> {
   try {
-    const host = (isMainnet || isICPNinja) ? 'https://ic0.app' : 'http://localhost:4943';
-    
-    // Використовуємо HTTP запит для transfer
-    const response = await fetch(`${host}/api/v2/canister/${ledgerCanisterId}/call`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/cbor',
-      },
-      body: new Uint8Array([
-        // Простий запит для transfer
-        // Це спрощена версія - в реальному проекті потрібно використовувати правильний Candid interface
-      ])
+    const host = (isMainnet || isICPNinja) ? 'https://ic0.app' : 'http://127.0.0.1:4943';
+
+    const agent = new HttpAgent({ host, identity });
+    if (!isMainnet && !isICPNinja) {
+      await agent.fetchRootKey();
+    }
+    const ledger = Actor.createActor(ledgerIdl, {
+      agent,
+      canisterId: ledgerCanisterId,
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    // Convert hex accountId to raw bytes
+    const toBytes = hexToBytes(to);
+    const fee = 10000n; // 0.0001 ICP in e8s
+    const nowNanos = BigInt(Date.now()) * 1_000_000n;
 
-    // Повертаємо успіх як заглушку
-    console.log('Transferring', amount.toString(), 'ICP to', to);
-    if (fromSubaccount) {
-      console.log('Using subaccount:', fromSubaccount);
+    const args = {
+      memo: memo ?? 0n,
+      amount: { e8s: amount },
+      fee: { e8s: fee },
+      from_subaccount: fromSubaccount ? [Array.from(fromSubaccount)] : [],
+      to: Array.from(toBytes),
+      created_at_time: [{ timestamp_nanos: nowNanos }]
+    };
+
+    const res = await (ledger as any).transfer(args);
+    if ('Ok' in res) {
+      return { success: true, blockHeight: BigInt(res.Ok) };
     }
-    if (identity) {
-      console.log('Using identity for transfer');
-    }
-    return { success: true, blockHeight: 123456n };
+    return { success: false, error: JSON.stringify(res.Err) };
   } catch (error) {
     console.error('Error transferring ICP:', error);
     return { success: false, error: (error as Error).toString() };
   }
+}
+
+function hexToBytes(hex: string): Uint8Array {
+  const clean = hex.trim().toLowerCase().replace(/^0x/, '');
+  if (clean.length % 2 !== 0) throw new Error('Invalid hex string length');
+  const bytes = new Uint8Array(clean.length / 2);
+  for (let i = 0; i < clean.length; i += 2) {
+    bytes[i / 2] = parseInt(clean.slice(i, i + 2), 16);
+  }
+  return bytes;
 }
 
 // Функція для отримання балансу з симуляцією (для демонстрації)

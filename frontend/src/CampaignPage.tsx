@@ -173,7 +173,8 @@ export default function CampaignPage() {
       // Optional memo currently unused in transferICP stub; kept for future real transfer
       const e8s = icpToE8s(amount);
       const identity = authClientRef.current?.getIdentity();
-      const res = await transferICP(campaign.accountId, e8s, undefined, identity);
+      const memoNat = donateMemo ? BigInt(Math.min(Number.MAX_SAFE_INTEGER, donateMemo.length)) : 0n;
+      const res = await transferICP(campaign.accountId, e8s, undefined, identity, memoNat);
       if (res.success) {
         setDonateSuccess({ blockHeight: res.blockHeight });
         setDonateAmount("");
