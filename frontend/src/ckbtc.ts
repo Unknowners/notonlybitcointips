@@ -2,7 +2,7 @@ import { Actor, HttpAgent } from '@dfinity/agent';
 // @ts-ignore
 import { idlFactory as ckbtcMinterIdl } from './canisters/ckbtc_minter.did.js';
 // @ts-ignore
-import { idlFactory as icrcIdl } from './canisters/ledger.did.js';
+import { idlFactory as icrcIdl } from './canisters/icrc1.did.js';
 
 const isMainnet = window.location.hostname.includes('ic0.app') || 
                   window.location.hostname.includes('icp0.io') ||
