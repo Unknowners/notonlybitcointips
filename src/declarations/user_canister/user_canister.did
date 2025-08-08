@@ -13,13 +13,13 @@ type UserCanister =
            bool;
          }) query;
    debugPrincipal: (userId: UserId) -> (text) query;
+   deleteCampaign: (campaignId: CampaignId) -> (Result);
    getAccountBalance: (accountId: AccountId) -> (nat64) query;
    getAllCampaigns: () -> (vec Campaign) query;
    getAllUsers: () -> (vec User) query;
    getCampaign: (id: text) -> (opt Campaign) query;
    getCampaignAccountId: (id: text) -> (opt AccountId) query;
    getCampaignSubaccount: (id: text) -> (opt blob) query;
-   getPrincipal: () -> (principal) query;
    getUserCampaigns: (userId: UserId) -> (vec Campaign) query;
    userExists: () -> (bool) query;
    whoami: () -> (principal);
@@ -37,6 +37,11 @@ type TransferRequest =
    amount: nat64;
    campaignId: CampaignId;
    targetAddress: text;
+ };
+type Result = 
+ variant {
+   err: text;
+   ok;
  };
 type CampaignId = text;
 type Campaign = 

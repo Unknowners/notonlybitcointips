@@ -276,51 +276,45 @@ export default function MainApp() {
 
   const handleCreateCampaign = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Валідація: перевіряємо чи вибрана хоча б одна валюта
-    if (campaign.tokens.length === 0) {
-      setError("Please select at least one currency for donations");
-      return;
-    }
-    
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await authState.actor.createCampaign(
-        campaign.name,
-        campaign.description,
-        campaign.tokens
-      );
-      console.log("Campaign created, id:", res);
-      setCampaignId(res);
-      // Очищаємо форму після успішного створення
-      setCampaign({ name: "", description: "", tokens: [] });
-      setStep("dashboard");
-      console.log("step:", "dashboard");
-      // Примусово оновлюємо список кампаній після створення
-      setTimeout(() => {
-        fetchUserCampaigns();
-      }, 100);
-    } catch (err) {
-      setError("Error creating campaign.");
-      console.error("Error creating campaign:", err);
-    }
-    setLoading(false);
-  };
-
-  const clearCampaigns = async () => {
     if (!authState.actor) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      await authState.actor.clearCampaigns();
-      console.log('✅ Campaigns cleared');
-      setUserCampaigns([]);
+      const result = await authState.actor.createCampaign(campaign.name, campaign.description, campaign.tokens);
+      console.log('✅ Campaign created:', result);
+      setCampaignId(result);
+      setCampaign({ name: "", description: "", tokens: [] });
+      await fetchUserCampaigns();
     } catch (error) {
-      console.error('❌ Error clearing campaigns:', error);
-      setError('Failed to clear campaigns. Please try again.');
+      console.error('❌ Error creating campaign:', error);
+      setError('Failed to create campaign. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Функція для видалення конкретної кампанії
+  const deleteCampaign = async (campaignId: string) => {
+    if (!authState.actor) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await authState.actor.deleteCampaign(campaignId);
+      if ('Ok' in result) {
+        console.log('✅ Campaign deleted successfully');
+        // Оновлюємо список кампаній
+        await fetchUserCampaigns();
+      } else {
+        console.error('❌ Error deleting campaign:', result.Err);
+        setError(`Failed to delete campaign: ${result.Err}`);
+      }
+    } catch (error) {
+      console.error('❌ Error deleting campaign:', error);
+      setError('Failed to delete campaign. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -401,32 +395,40 @@ export default function MainApp() {
           <div className="mb-8">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-lg font-bold text-gray-800">Your Campaigns</h2>
-              {userCampaigns.length > 0 && (
-                <button
-                  onClick={clearCampaigns}
-                  className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition"
-                  disabled={loading}
-                >
-                  {loading ? "Clearing..." : "Clear All"}
-                </button>
-              )}
             </div>
             <ul className="space-y-2">
-              {userCampaigns.map((c, i) => (
-                <li key={i} className="bg-gray-100 rounded-lg px-4 py-3 flex justify-between items-center">
-                  <div className="flex-1">
-                    <div className="font-semibold text-gray-900">{c.name}</div>
-                    <div className="text-gray-500 text-sm">{c.description}</div>
-                    <div className="text-xs text-gray-400">Created: {new Date(Number(c.createdAt) / 1_000_000).toLocaleString()}</div>
-                    {c.balance && (
-                      <div className="text-sm font-medium text-green-600 mt-1">
-                        Balance: {c.balance} ICP
-                      </div>
-                    )}
-                  </div>
-                  <a href={`/donate/${c.id}`} className="text-blue-600 hover:underline font-bold ml-2">View</a>
-                </li>
-              ))}
+              {userCampaigns.map((c, i) => {
+                const isOwner = c.owner === authState.principal;
+                const hasBalance = c.balance && parseFloat(c.balance) > 0;
+                
+                return (
+                  <li key={i} className="bg-gray-100 rounded-lg px-4 py-3 flex justify-between items-center">
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-900">{c.name}</div>
+                      <div className="text-gray-500 text-sm">{c.description}</div>
+                      <div className="text-xs text-gray-400">Created: {new Date(Number(c.createdAt) / 1_000_000).toLocaleString()}</div>
+                      {c.balance && (
+                        <div className="text-sm font-medium text-green-600 mt-1">
+                          Balance: {c.balance} ICP
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <a href={`/donate/${c.id}`} className="text-blue-600 hover:underline font-bold">View</a>
+                      {isOwner && !hasBalance && (
+                        <button
+                          onClick={() => deleteCampaign(c.id)}
+                          className="text-red-600 hover:text-red-800 font-bold"
+                          disabled={loading}
+                          title="Delete campaign (only if balance is zero)"
+                        >
+                          {loading ? "..." : "Delete"}
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         )}
@@ -579,7 +581,7 @@ export default function MainApp() {
       <div className="mt-8 text-gray-400 text-xs text-center select-none">
         &copy; {new Date().getFullYear()} Not Only Bitcoin Tips. Powered by ICP Hackathon.
         <br />
-        Version 0.7.3
+        Version 0.7.4
       </div>
     </div>
   );

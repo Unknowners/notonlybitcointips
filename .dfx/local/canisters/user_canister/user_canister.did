@@ -13,6 +13,7 @@ type UserCanister =
            bool;
          }) query;
    debugPrincipal: (userId: UserId) -> (text) query;
+   deleteCampaign: (campaignId: CampaignId) -> (Result);
    getAccountBalance: (accountId: AccountId) -> (nat64) query;
    getAllCampaigns: () -> (vec Campaign) query;
    getAllUsers: () -> (vec User) query;
@@ -36,6 +37,11 @@ type TransferRequest =
    amount: nat64;
    campaignId: CampaignId;
    targetAddress: text;
+ };
+type Result = 
+ variant {
+   err: text;
+   ok;
  };
 type CampaignId = text;
 type Campaign = 

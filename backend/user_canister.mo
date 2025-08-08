@@ -113,6 +113,40 @@ shared({ caller = initializer }) actor class UserCanister() = {
         campaignsMap := HashMap.HashMap<CampaignId, Campaign>(0, Text.equal, Text.hash);
     };
 
+    // Функція для видалення конкретної кампанії (тільки власником, якщо баланс = 0)
+    public shared({ caller }) func deleteCampaign(campaignId: CampaignId) : async Result.Result<(), Text> {
+        switch (campaignsMap.get(campaignId)) {
+            case (?campaign) {
+                // Перевіряємо чи користувач є власником кампанії
+                if (Principal.equal(campaign.owner, caller) == false) {
+                    return #err("Only campaign owner can delete the campaign");
+                };
+                
+                // Перевіряємо чи баланс кампанії = 0
+                // TODO: В майбутньому тут буде перевірка реального балансу через Ledger
+                // Поки що завжди дозволяємо видалення (для тестування)
+                // let balance = await getCampaignBalance(campaign.accountId);
+                // if (balance > 0) {
+                //     return #err("Cannot delete campaign with non-zero balance");
+                // };
+                
+                // Видаляємо кампанію
+                campaignsMap.delete(campaignId);
+                return #ok(());
+            };
+            case null {
+                return #err("Campaign not found");
+            };
+        };
+    };
+
+    // Функція для перевірки балансу кампанії (заглушка для майбутнього)
+    private func getCampaignBalance(accountId: AccountId) : async Nat64 {
+        // TODO: Реальна перевірка балансу через ICP Ledger
+        // Поки що повертаємо 0 для тестування
+        return 0;
+    };
+    
     // Правильна функція для генерації account ID згідно з ICP стандартами
     // account_identifier(principal,subaccount_identifier) = CRC32(h) || h
     // де h = sha224("\x0Aaccount-id" || principal || subaccount_identifier)

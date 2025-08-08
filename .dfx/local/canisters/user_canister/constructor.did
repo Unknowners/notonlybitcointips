@@ -10,6 +10,7 @@ type Campaign = record {
   description : text;
 };
 type CampaignId = text;
+type Result = variant { ok; err : text };
 type TransferRequest = record {
   campaignId : CampaignId;
   targetAddress : text;
@@ -28,6 +29,7 @@ type UserCanister = service {
   createUser : (text, opt text) -> (bool);
   debugCompare : (UserId) -> (vec record { text; principal; bool }) query;
   debugPrincipal : (UserId) -> (text) query;
+  deleteCampaign : (CampaignId) -> (Result);
   getAccountBalance : (AccountId) -> (nat64) query;
   getAllCampaigns : () -> (vec Campaign) query;
   getAllUsers : () -> (vec User) query;

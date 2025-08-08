@@ -14,6 +14,8 @@ export interface Campaign {
   'description' : string,
 }
 export type CampaignId = string;
+export type Result = { 'ok' : null } |
+  { 'err' : string };
 export interface TransferRequest {
   'campaignId' : CampaignId,
   'targetAddress' : string,
@@ -32,13 +34,13 @@ export interface UserCanister {
   'createUser' : ActorMethod<[string, [] | [string]], boolean>,
   'debugCompare' : ActorMethod<[UserId], Array<[string, Principal, boolean]>>,
   'debugPrincipal' : ActorMethod<[UserId], string>,
+  'deleteCampaign' : ActorMethod<[CampaignId], Result>,
   'getAccountBalance' : ActorMethod<[AccountId], bigint>,
   'getAllCampaigns' : ActorMethod<[], Array<Campaign>>,
   'getAllUsers' : ActorMethod<[], Array<User>>,
   'getCampaign' : ActorMethod<[string], [] | [Campaign]>,
   'getCampaignAccountId' : ActorMethod<[string], [] | [AccountId]>,
   'getCampaignSubaccount' : ActorMethod<[string], [] | [Uint8Array | number[]]>,
-  'getPrincipal' : ActorMethod<[], Principal>,
   'getUserCampaigns' : ActorMethod<[UserId], Array<Campaign>>,
   'userExists' : ActorMethod<[], boolean>,
   'whoami' : ActorMethod<[], Principal>,

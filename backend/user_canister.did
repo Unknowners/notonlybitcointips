@@ -29,4 +29,5 @@ service : {
   userExists: () -> (bool) query;
   clearUsers: () -> ();
   clearCampaigns: () -> ();
-} 
+  deleteCampaign: (campaignId: text) -> (result { ok: () }, { err: text });
+}; 

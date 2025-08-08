@@ -1,7 +1,8 @@
 export const idlFactory = ({ IDL }) => {
   const UserId = IDL.Principal;
-  const AccountId = IDL.Text;
   const CampaignId = IDL.Text;
+  const Result = IDL.Variant({ 'ok' : IDL.Null, 'err' : IDL.Text });
+  const AccountId = IDL.Text;
   const Campaign = IDL.Record({
     'id' : CampaignId,
     'accountId' : AccountId,
@@ -38,6 +39,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'debugPrincipal' : IDL.Func([UserId], [IDL.Text], ['query']),
+    'deleteCampaign' : IDL.Func([CampaignId], [Result], []),
     'getAccountBalance' : IDL.Func([AccountId], [IDL.Nat64], ['query']),
     'getAllCampaigns' : IDL.Func([], [IDL.Vec(Campaign)], ['query']),
     'getAllUsers' : IDL.Func([], [IDL.Vec(User)], ['query']),
