@@ -581,7 +581,11 @@ export default function MainApp() {
           </>
         )}
       </div>
-      <div className="mt-8 text-gray-400 text-xs text-center select-none">&copy; {new Date().getFullYear()} Donation Hub. Powered by ICP Hackathon.</div>
+      <div className="mt-8 text-gray-400 text-xs text-center select-none">
+        &copy; {new Date().getFullYear()} Donation Hub. Powered by ICP Hackathon.
+        <br />
+        Version 0.5.0
+      </div>
     </div>
   );
 } 
