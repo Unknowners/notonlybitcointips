@@ -322,13 +322,15 @@ export default function MainApp() {
 
     try {
       const result = await authState.actor.deleteCampaign(campaignId);
-      if ('Ok' in result) {
+      if ('ok' in result) {
         console.log('✅ Campaign deleted successfully');
-        // Оновлюємо список кампаній
         await fetchUserCampaigns();
+      } else if ('err' in result) {
+        console.error('❌ Error deleting campaign:', result.err);
+        setError(`Failed to delete campaign: ${result.err}`);
       } else {
-        console.error('❌ Error deleting campaign:', result.Err);
-        setError(`Failed to delete campaign: ${result.Err}`);
+        console.error('❌ Error deleting campaign: unexpected result', result);
+        setError('Failed to delete campaign: unexpected result');
       }
     } catch (error) {
       console.error('❌ Error deleting campaign:', error);
