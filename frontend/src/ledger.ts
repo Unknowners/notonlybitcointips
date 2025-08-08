@@ -18,8 +18,10 @@ export async function getAccountBalance(accountId: string): Promise<bigint> {
   try {
     const host = (isMainnet || isICPNinja) ? 'https://ic0.app' : 'http://localhost:4943';
     
-    console.log('Getting balance for account:', accountId);
-    console.log('Using host:', host);
+    if (import.meta.env.DEV) {
+      console.log('Getting balance for account:', accountId);
+      console.log('Using host:', host);
+    }
     
     // Використовуємо реальний HTTP запит до ICP Ledger
     const balance = await getRealAccountBalance(accountId);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, startTransition } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { useParams, useNavigate } from "react-router-dom";
 import { user_canister } from "./canisters/index.js";
@@ -13,7 +13,9 @@ export default function CampaignPage() {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);
   const [balance, setBalance] = useState<bigint>(0n);
-  const [balanceLoading, setBalanceLoading] = useState(false);
+  const [balanceLoading, setBalanceLoading] = useState(true);
+  const isFetchingBalanceRef = useRef(false);
+  const lastBalanceRef = useRef<bigint>(0n);
   
   // Withdraw form state
   const [withdrawAddress, setWithdrawAddress] = useState("");
@@ -115,17 +117,24 @@ export default function CampaignPage() {
   };
 
   const loadBalance = async (accountId: string) => {
-    setBalanceLoading(true);
+    if (!accountId) return;
+    if (isFetchingBalanceRef.current) return;
+    isFetchingBalanceRef.current = true;
     try {
-      // Використовуємо справжній баланс замість симуляції
       const balanceValue = await getAccountBalance(accountId);
-      setBalance(balanceValue);
+      if (balanceValue !== lastBalanceRef.current) {
+        lastBalanceRef.current = balanceValue;
+        startTransition(() => setBalance(balanceValue));
+      }
     } catch (error) {
       console.error('Error loading balance:', error);
-      // Якщо справжній баланс не працює, використовуємо симуляцію
       const simulatedBalance = await getSimulatedBalance(accountId);
-      setBalance(simulatedBalance);
+      if (simulatedBalance !== lastBalanceRef.current) {
+        lastBalanceRef.current = simulatedBalance;
+        startTransition(() => setBalance(simulatedBalance));
+      }
     } finally {
+      isFetchingBalanceRef.current = false;
       setBalanceLoading(false);
     }
   };
