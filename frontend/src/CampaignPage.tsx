@@ -37,6 +37,8 @@ export default function CampaignPage() {
     
     try {
       console.log('Loading campaign with ID:', id);
+      console.log('🔍 Using canister ID:', (user_canister as any).canisterId);
+      console.log('🔍 Using host:', (user_canister as any).agent?.host);
       const campaignData = await user_canister.getCampaign(id);
       console.log('Campaign data received:', campaignData);
       

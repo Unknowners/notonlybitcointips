@@ -78,7 +78,9 @@ console.log('🌐 Canister host detection:', {
   host,
   canisterId,
   VITE_DFX_NETWORK: import.meta.env.VITE_DFX_NETWORK,
-  pathname: window.location.pathname
+  pathname: window.location.pathname,
+  VITE_CANISTER_ID_USER_CANISTER: import.meta.env.VITE_CANISTER_ID_USER_CANISTER,
+  canisterIds: canisterIds
 });
 
 // Create a default agent for anonymous calls
