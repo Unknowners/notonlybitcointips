@@ -41,17 +41,23 @@ export default function CampaignPage() {
       console.log('Campaign data received:', campaignData);
       
       if (campaignData) {
-        console.log('🔍 Повний об\'єкт кампанії з backend:', campaignData);
-        console.log('🔍 Всі поля кампанії:', Object.keys(campaignData));
-        console.log('🔍 Тип campaignData:', typeof campaignData);
-        console.log('🔍 accountId поле:', campaignData.accountId);
-        console.log('🔍 Тип accountId:', typeof campaignData.accountId);
+        console.log('🔍 Сира відповідь з backend:', campaignData);
+        console.log('🔍 Тип відповіді:', typeof campaignData);
+        console.log('🔍 Це масив?', Array.isArray(campaignData));
         
-        setCampaign(campaignData);
-        console.log('Using account ID from campaign:', campaignData.accountId);
+        // getCampaign повертає Optional<Campaign> = [Campaign] | []
+        const campaign = Array.isArray(campaignData) && campaignData.length > 0 ? campaignData[0] : campaignData;
+        
+        console.log('🔍 Витягнута кампанія:', campaign);
+        console.log('🔍 Поля кампанії:', Object.keys(campaign));
+        console.log('🔍 accountId поле:', campaign.accountId);
+        console.log('🔍 Тип accountId:', typeof campaign.accountId);
+        
+        setCampaign(campaign);
+        console.log('Using account ID from campaign:', campaign.accountId);
         
         // Перевіряємо чи account ID існує в кампанії
-        if (!campaignData.accountId) {
+        if (!campaign.accountId) {
           console.error('Account ID не знайдено в кампанії! Перевірте backend генерацію.');
         }
         
@@ -59,12 +65,12 @@ export default function CampaignPage() {
         try {
           const currentUser = await user_canister.whoami();
           console.log('Current user:', currentUser);
-          console.log('Campaign owner:', campaignData.owner);
+          console.log('Campaign owner:', campaign.owner);
           
           // Перевіряємо чи owner існує та чи користувач авторизований
-          if (campaignData.owner && currentUser) {
+          if (campaign.owner && currentUser) {
             // Конвертуємо Principal в string для порівняння
-            const ownerString = campaignData.owner.toString();
+            const ownerString = campaign.owner.toString();
             const currentUserString = currentUser.toString();
             console.log('Comparing owner:', ownerString, 'with current user:', currentUserString);
             setIsOwner(currentUserString === ownerString);
