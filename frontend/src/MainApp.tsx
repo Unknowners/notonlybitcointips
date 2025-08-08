@@ -111,18 +111,11 @@ export default function MainApp() {
         isAuthenticated
       }));
 
-                        // Автоматичний логін тільки для локального режиму
+                        // Автоматичний перехід на dashboard після успішної авторизації
                         if (isAuthenticated) {
                           console.log('✅ User is authenticated');
-                          
-                          // Тільки для локального режиму - автоматично переходимо на dashboard
-                          if (!isMainnet && !isICPNinja) {
-                            console.log('🛠️ LOCAL mode: Auto-login to dashboard');
-                            setStep("dashboard");
-                          } else {
-                            console.log('🌐 PROD mode: User must manually login');
-                            // На продакшені залишаємо користувача на auth сторінці
-                          }
+                          console.log('🔄 Redirecting to dashboard...');
+                          setStep("dashboard");
                         } else {
                           console.log('❌ User is not authenticated');
                         }
@@ -586,7 +579,7 @@ export default function MainApp() {
       <div className="mt-8 text-gray-400 text-xs text-center select-none">
         &copy; {new Date().getFullYear()} Not Only Bitcoin Tips. Powered by ICP Hackathon.
         <br />
-        Version 0.6.6
+        Version 0.6.7
       </div>
     </div>
   );
