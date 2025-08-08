@@ -39,7 +39,11 @@ export default function CampaignPage() {
       console.log('Loading campaign with ID:', id);
       console.log('🔍 Using canister ID:', (user_canister as any).canisterId);
       console.log('🔍 Using host:', (user_canister as any).agent?.host);
-      const campaignData = await user_canister.getCampaign(id);
+      // ВАЖЛИВО: використовуємо автентифікований actor, щоб уникнути анонімних запитів
+      const authClient = await (window as any).authClient?.create?.() || await (await import('@dfinity/auth-client')).AuthClient.create();
+      const identity = authClient.getIdentity();
+      const actor = (await import('./canisters/index.js')).createActor(identity);
+      const campaignData = await actor.getCampaign(id);
       console.log('Campaign data received:', campaignData);
       
       if (campaignData) {
