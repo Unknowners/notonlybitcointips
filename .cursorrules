@@ -147,9 +147,10 @@ VITE_DFX_NETWORK=local  # or ic for mainnet
 - **Balance simulation**: Use getRealAccountBalance vs getSimulatedBalance
 
 ## DEPLOYMENT
-- **Local**: `dfx deploy`
-- **Mainnet**: `dfx deploy --network ic` (requires cycles)
-- **Scripts**: Use scripts/deploy-to-mainnet.sh for production
+- **Local**: `dfx deploy` - тестування тільки локально
+- **Mainnet**: ICP Ninja автоматично деплоїть при натисканні "Run"
+- **ВАЖЛИВО**: НЕ намагатися деплоїти на mainnet вручну - це робить ICP Ninja
+- **Scripts**: Use scripts/deploy-to-mainnet.sh for production (тільки якщо потрібно)
 
 ## CODING STYLE PREFERENCES
 1. **Ukrainian comments**: Code comments in Ukrainian language
