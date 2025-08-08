@@ -22,6 +22,7 @@ type User = record {
   email : opt text;
 };
 type UserCanister = service {
+  clearCampaigns : () -> ();
   clearUsers : () -> ();
   createCampaign : (text, text, vec text) -> (text);
   createUser : (text, opt text) -> (bool);

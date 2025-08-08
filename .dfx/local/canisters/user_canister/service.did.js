@@ -24,6 +24,7 @@ export const idlFactory = ({ IDL }) => {
     'amount' : IDL.Nat64,
   });
   const UserCanister = IDL.Service({
+    'clearCampaigns' : IDL.Func([], [], []),
     'clearUsers' : IDL.Func([], [], []),
     'createCampaign' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Vec(IDL.Text)],

@@ -109,6 +109,10 @@ shared({ caller = initializer }) actor class UserCanister() = {
         usersMap := HashMap.HashMap<UserId, User>(0, Principal.equal, Principal.hash);
     };
 
+    public shared({ caller }) func clearCampaigns() : async () {
+        campaignsMap := HashMap.HashMap<CampaignId, Campaign>(0, Text.equal, Text.hash);
+    };
+
     // Правильна функція для генерації account ID згідно з ICP стандартами
     // account_identifier(principal,subaccount_identifier) = CRC32(h) || h
     // де h = sha224("\x0Aaccount-id" || principal || subaccount_identifier)

@@ -28,4 +28,5 @@ service : {
   whoami: () -> (principal) query;
   userExists: () -> (bool) query;
   clearUsers: () -> ();
+  clearCampaigns: () -> ();
 } 
