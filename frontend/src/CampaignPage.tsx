@@ -21,7 +21,6 @@ export default function CampaignPage() {
   
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);
-  const [accountId, setAccountId] = useState<string | null>(null);
   const [balance, setBalance] = useState<bigint>(0n);
   const [balanceLoading, setBalanceLoading] = useState(false);
   
@@ -52,25 +51,7 @@ export default function CampaignPage() {
       
       if (campaignData) {
         setCampaign(campaignData);
-        
-        // Отримуємо account ID для кампанії
-        try {
-          console.log('Getting account ID for campaign:', id);
-          const accountIdData = await user_canister.getCampaignAccountId(id);
-          console.log('Account ID received:', accountIdData);
-          
-          if (accountIdData) {
-            setAccountId(accountIdData);
-          } else {
-            // Якщо account ID не знайдено, генеруємо fallback
-            console.log('Account ID not found, generating fallback');
-            setAccountId(`account_${id}`);
-          }
-        } catch (accountError) {
-          console.error('Error getting account ID:', accountError);
-          // Якщо не можемо отримати account ID, використовуємо ID кампанії
-          setAccountId(`account_${id}`);
-        }
+        console.log('Using account ID from campaign:', campaignData.accountId);
         
         // Перевіряємо чи поточний користувач є власником
         try {
@@ -117,19 +98,19 @@ export default function CampaignPage() {
 
   // Оновлення балансу кожні 10 секунд
   useEffect(() => {
-    if (!accountId) return;
+    if (!campaign?.accountId) return;
 
     // Завантажуємо баланс одразу
-    loadBalance(accountId);
+    loadBalance(campaign.accountId);
 
     // Встановлюємо інтервал для оновлення кожні 10 секунд
     const interval = setInterval(() => {
       console.log('Updating balance...'); // Логуємо для дебагу
-      loadBalance(accountId);
+      loadBalance(campaign.accountId);
     }, 10000);
 
     return () => clearInterval(interval);
-  }, [accountId]);
+  }, [campaign?.accountId]);
 
   const handleWithdraw = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,7 +146,7 @@ export default function CampaignPage() {
         setWithdrawAddress("");
         setWithdrawAmount("");
         // Оновлюємо баланс після успішного виведення
-        setTimeout(() => loadBalance(accountId!), 1000);
+        setTimeout(() => loadBalance(campaign.accountId!), 1000);
       } else {
         setWithdrawError("Withdrawal failed. Please check your address and try again.");
       }
@@ -218,14 +199,14 @@ export default function CampaignPage() {
         </div>
 
         {/* Donation Address - показується відразу */}
-        {accountId && (
+        {campaign.accountId && (
           <div className="mb-6 p-4 bg-blue-50 rounded-lg">
             <h3 className="font-semibold text-blue-900 mb-2">Donation Address</h3>
             <p className="text-sm text-gray-600 break-all font-mono mb-2 bg-gray-100 p-2 rounded">
-              {accountId}
+              {campaign.accountId}
             </p>
             <div className="flex justify-center">
-              <QRCodeSVG value={accountId} size={128} bgColor="#fff" fgColor="#1e293b" className="rounded-md shadow-md" />
+              <QRCodeSVG value={campaign.accountId} size={128} bgColor="#fff" fgColor="#1e293b" className="rounded-md shadow-md" />
             </div>
             <p className="text-xs text-gray-500 mt-2">
               Scan this QR code to donate ICP directly to this campaign
