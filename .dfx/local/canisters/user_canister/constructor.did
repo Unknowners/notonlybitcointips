@@ -34,7 +34,6 @@ type UserCanister = service {
   getCampaign : (text) -> (opt Campaign) query;
   getCampaignAccountId : (text) -> (opt AccountId) query;
   getCampaignSubaccount : (text) -> (opt blob) query;
-  getPrincipal : () -> (principal) query;
   getUserCampaigns : (UserId) -> (vec Campaign) query;
   userExists : () -> (bool) query;
   whoami : () -> (principal);

@@ -52,7 +52,6 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Opt(IDL.Vec(IDL.Nat8))],
         ['query'],
       ),
-    'getPrincipal' : IDL.Func([], [IDL.Principal], ['query']),
     'getUserCampaigns' : IDL.Func([UserId], [IDL.Vec(Campaign)], ['query']),
     'userExists' : IDL.Func([], [IDL.Bool], ['query']),
     'whoami' : IDL.Func([], [IDL.Principal], []),

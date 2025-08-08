@@ -72,10 +72,10 @@ shared({ caller = initializer }) actor class UserCanister() = {
         return caller;
     };
     
-    // Query version for compatibility
-    public query func getPrincipal() : async Principal {
-        return Principal.fromText("2vxsx-fae"); // Anonymous principal for query calls
-    };
+    // Query version for compatibility - REMOVED: This was causing anonymous user issues
+    // public query func getPrincipal() : async Principal {
+    //     return Principal.fromText("2vxsx-fae"); // Anonymous principal for query calls
+    // };
 
     // User management
     public shared({ caller }) func createUser(name: Text, email: ?Text) : async Bool {

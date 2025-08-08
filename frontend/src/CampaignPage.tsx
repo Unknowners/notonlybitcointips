@@ -44,21 +44,37 @@ export default function CampaignPage() {
         console.log('🔍 Сира відповідь з backend:', campaignData);
         console.log('🔍 Тип відповіді:', typeof campaignData);
         console.log('🔍 Це масив?', Array.isArray(campaignData));
+        console.log('🔍 Довжина масиву:', Array.isArray(campaignData) ? campaignData.length : 'N/A');
         
         // getCampaign повертає Optional<Campaign> = [Campaign] | []
         const campaign = Array.isArray(campaignData) && campaignData.length > 0 ? campaignData[0] : campaignData;
         
         console.log('🔍 Витягнута кампанія:', campaign);
+        console.log('🔍 Тип витягнутої кампанії:', typeof campaign);
         console.log('🔍 Поля кампанії:', Object.keys(campaign));
+        console.log('🔍 Кількість полів:', Object.keys(campaign).length);
+        
+        // Детальний аналіз accountId
         console.log('🔍 accountId поле:', campaign.accountId);
         console.log('🔍 Тип accountId:', typeof campaign.accountId);
+        console.log('🔍 accountId === undefined:', campaign.accountId === undefined);
+        console.log('🔍 accountId === null:', campaign.accountId === null);
+        console.log('🔍 accountId === ""', campaign.accountId === "");
+        
+        // Перевіряємо чи є accountId в прототипі
+        console.log('🔍 accountId в прототипі:', 'accountId' in campaign);
+        console.log('🔍 hasOwnProperty accountId:', campaign.hasOwnProperty('accountId'));
         
         setCampaign(campaign);
         console.log('Using account ID from campaign:', campaign.accountId);
         
         // Перевіряємо чи account ID існує в кампанії
         if (!campaign.accountId) {
-          console.error('Account ID не знайдено в кампанії! Перевірте backend генерацію.');
+          console.error('❌ Account ID не знайдено в кампанії!');
+          console.error('❌ Перевірте backend генерацію та Candid інтерфейс.');
+          console.error('❌ Можливо проблема в десеріалізації Optional типу.');
+        } else {
+          console.log('✅ Account ID знайдено:', campaign.accountId);
         }
         
         // Перевіряємо чи поточний користувач є власником

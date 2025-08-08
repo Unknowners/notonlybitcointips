@@ -38,7 +38,6 @@ export interface UserCanister {
   'getCampaign' : ActorMethod<[string], [] | [Campaign]>,
   'getCampaignAccountId' : ActorMethod<[string], [] | [AccountId]>,
   'getCampaignSubaccount' : ActorMethod<[string], [] | [Uint8Array | number[]]>,
-  'getPrincipal' : ActorMethod<[], Principal>,
   'getUserCampaigns' : ActorMethod<[UserId], Array<Campaign>>,
   'userExists' : ActorMethod<[], boolean>,
   'whoami' : ActorMethod<[], Principal>,

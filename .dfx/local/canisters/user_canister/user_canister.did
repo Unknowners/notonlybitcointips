@@ -19,7 +19,6 @@ type UserCanister =
    getCampaign: (id: text) -> (opt Campaign) query;
    getCampaignAccountId: (id: text) -> (opt AccountId) query;
    getCampaignSubaccount: (id: text) -> (opt blob) query;
-   getPrincipal: () -> (principal) query;
    getUserCampaigns: (userId: UserId) -> (vec Campaign) query;
    userExists: () -> (bool) query;
    whoami: () -> (principal);
