@@ -13,6 +13,42 @@ import { Actor, HttpAgent } from '@dfinity/agent';
 // @ts-ignore - JS IDL factory
 import { idlFactory as ledgerIdl } from './canisters/ledger.did.js';
 
+function stringifyWithBigInt(value: unknown): string {
+  return JSON.stringify(value, (_key, val) => (typeof val === 'bigint' ? val.toString() : val));
+}
+
+function formatTransferError(err: any): string {
+  try {
+    if (err && typeof err === 'object') {
+      if ('InsufficientFunds' in err) {
+        const bal = (err as any).InsufficientFunds?.balance?.e8s;
+        return `Insufficient funds${bal !== undefined ? ` (balance: ${bal.toString()} e8s)` : ''}`;
+      }
+      if ('BadFee' in err) {
+        const exp = (err as any).BadFee?.expected_fee?.e8s;
+        return `Bad fee${exp !== undefined ? ` (expected: ${exp.toString()} e8s)` : ''}`;
+      }
+      if ('TxTooOld' in err) {
+        const win = (err as any).TxTooOld?.allowed_window_nanos;
+        return `Transaction too old${win !== undefined ? ` (allowed window: ${win.toString()} ns)` : ''}`;
+      }
+      if ('TxDuplicate' in err) {
+        const dup = (err as any).TxDuplicate?.duplicate_of;
+        return `Duplicate transaction${dup !== undefined ? ` (block: ${dup.toString()})` : ''}`;
+      }
+      if ('TxCreatedInFuture' in err) {
+        return 'Transaction created in the future';
+      }
+      if ('TemporarilyUnavailable' in err) {
+        return 'Ledger temporarily unavailable';
+      }
+    }
+    return stringifyWithBigInt(err);
+  } catch (_) {
+    return 'Unknown transfer error';
+  }
+}
+
 // Функція для отримання балансу account через HTTP запит
 export async function getAccountBalance(accountId: string): Promise<bigint> {
   try {
@@ -112,7 +148,7 @@ export async function transferICP(
     if ('Ok' in res) {
       return { success: true, blockHeight: BigInt(res.Ok) };
     }
-    return { success: false, error: JSON.stringify(res.Err) };
+    return { success: false, error: formatTransferError(res.Err) };
   } catch (error) {
     console.error('Error transferring ICP:', error);
     return { success: false, error: (error as Error).toString() };
