@@ -27,70 +27,74 @@ export async function generateAccountId(userPrincipal: string, campaignId: strin
 }
 
 // Функція для генерації account identifier згідно з ICP стандартами
+// account_identifier(principal,subaccount_identifier) = CRC32(h) || h
+// де h = sha224("\x0Aaccount-id" || principal || subaccount_identifier)
 export async function generateAccountIdentifier(principal: Principal, subaccount: Uint8Array): Promise<string> {
-  // ICP account identifier format:
-  // SHA224(0x0A + "account-id" + principal + subaccount)
-  
-  const prefix = new TextEncoder().encode('\x0Aaccount-id');
+  // Формуємо дані для хешування згідно з ICP специфікацією
+  const domainSeparator = new Uint8Array([0x0A, ...new TextEncoder().encode('account-id')]);
   const principalBytes = principal.toUint8Array();
   
-  // Об'єднуємо всі частини
-  const data = new Uint8Array(prefix.length + principalBytes.length + subaccount.length);
-  data.set(prefix, 0);
-  data.set(principalBytes, prefix.length);
-  data.set(subaccount, prefix.length + principalBytes.length);
+  // Об'єднуємо всі частини: domain_separator + principal + subaccount
+  const data = new Uint8Array(domainSeparator.length + principalBytes.length + subaccount.length);
+  data.set(domainSeparator, 0);
+  data.set(principalBytes, domainSeparator.length);
+  data.set(subaccount, domainSeparator.length + principalBytes.length);
   
-  // Генеруємо SHA-224 hash
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = new Uint8Array(hash);
+  // Генеруємо SHA-256 hash і беремо перші 28 байт (SHA-224)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = new Uint8Array(hashBuffer);
   
   // Беремо перші 28 байт (SHA-224)
-  const accountBytes = hashArray.slice(0, 28);
+  const h = hashArray.slice(0, 28);
   
   // Генеруємо CRC32 checksum
-  const checksum = await generateCRC32(accountBytes);
+  const checksum = crc32(h);
   
-  // Об'єднуємо checksum + account bytes
-  const result = new Uint8Array(checksum.length + accountBytes.length);
-  result.set(checksum, 0);
-  result.set(accountBytes, checksum.length);
+  // Формуємо фінальний account identifier: CRC32(h) || h
+  const result = new Uint8Array(4 + h.length);
+  
+  // Записуємо CRC32 у big-endian форматі
+  result[0] = (checksum >>> 24) & 0xFF;
+  result[1] = (checksum >>> 16) & 0xFF;
+  result[2] = (checksum >>> 8) & 0xFF;
+  result[3] = checksum & 0xFF;
+  
+  // Додаємо хеш
+  result.set(h, 4);
   
   // Конвертуємо в hex string
-  const hexString = Array.from(result)
+  return Array.from(result)
     .map(byte => byte.toString(16).padStart(2, '0'))
     .join('');
-  
-  return hexString;
 }
 
-// Функція для генерації CRC32 checksum
-async function generateCRC32(data: Uint8Array): Promise<Uint8Array> {
-  // Простий CRC32 реалізація
+// CRC32 implementation згідно з ISO 3309, ITU-T V.42
+function crc32(data: Uint8Array): number {
+  const table = new Uint32Array(256);
+  
+  // Генеруємо CRC32 таблицю
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let j = 0; j < 8; j++) {
+      c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    }
+    table[i] = c;
+  }
+  
   let crc = 0xFFFFFFFF;
   
   for (let i = 0; i < data.length; i++) {
-    crc ^= data[i] << 24;
-    for (let j = 0; j < 8; j++) {
-      if ((crc & 0x80000000) !== 0) {
-        crc = (crc << 1) ^ 0x04C11DB7;
-      } else {
-        crc <<= 1;
-      }
-      crc >>>= 0;
-    }
+    crc = (crc >>> 8) ^ table[(crc ^ data[i]) & 0xFF];
   }
   
-  const result = new Uint8Array(4);
-  result[0] = (crc >>> 24) & 0xFF;
-  result[1] = (crc >>> 16) & 0xFF;
-  result[2] = (crc >>> 8) & 0xFF;
-  result[3] = crc & 0xFF;
-  
-  return result;
+  return (crc ^ 0xFFFFFFFF) >>> 0; // Unsigned 32-bit
 }
 
-// Функція для генерації account identifier (для сумісності)
+// Функція для генерації account identifier (для сумісності - застаріла)
 export function accountIdentifier(principal: Principal, subaccount?: Uint8Array): string {
+  // Ця функція застаріла, використовуйте generateAccountIdentifier
+  console.warn('accountIdentifier is deprecated, use generateAccountIdentifier instead');
+  
   const data = new Uint8Array([
     ...new TextEncoder().encode('\x0Aaccount-id'),
     ...principal.toUint8Array(),

@@ -110,68 +110,101 @@ shared({ caller = initializer }) actor class UserCanister() = {
     };
 
     // Правильна функція для генерації account ID згідно з ICP стандартами
+    // account_identifier(principal,subaccount_identifier) = CRC32(h) || h
+    // де h = sha224("\x0Aaccount-id" || principal || subaccount_identifier)
     private func generateAccountId(userPrincipal: Principal, campaignId: Text) : AccountId {
         // Конвертуємо campaign ID в 32-byte subaccount
-        let campaignBytes = Text.encodeUtf8(campaignId);
+        let campaignBytes = Blob.toArray(Text.encodeUtf8(campaignId));
         let subaccount = Array.tabulate<Nat8>(32, func(i : Nat) : Nat8 {
             if (i < campaignBytes.size()) { campaignBytes[i] } else { 0 }
         });
         
-        // Генеруємо account identifier згідно з ICP стандартами
-        // SHA224(0x0A + "account-id" + principal + subaccount)
-        let prefix = Blob.toArray(Text.encodeUtf8("account-id"));
-        let principalText = Principal.toText(userPrincipal);
-        let principalBytes = Blob.toArray(Text.encodeUtf8(principalText));
+        // Формуємо дані для хешування згідно з ICP специфікацією
+        // Domain separator: \x0A + "account-id"
+        let domainSeparator = Array.append<Nat8>([0x0A], Blob.toArray(Text.encodeUtf8("account-id")));
+        let principalBytes = Blob.toArray(Principal.toBlob(userPrincipal));
         
-        // Об'єднуємо всі частини
-        let data = Array.append<Nat8>(prefix, principalBytes);
-        let data2 = Array.append<Nat8>(data, subaccount);
+        // Об'єднуємо всі частини: domain_separator + principal + subaccount
+        let data1 = Array.append<Nat8>(domainSeparator, principalBytes);
+        let data = Array.append<Nat8>(data1, subaccount);
         
-        // Генеруємо простий hash (в реальному проекті використовуйте SHA-256)
-        let hash = Array.tabulate<Nat8>(32, func(i : Nat) : Nat8 {
-            if (i < data2.size()) { data2[i] } else { 0 }
-        });
+        // Генеруємо SHA-256 hash і беремо перші 28 байт (імітуємо SHA-224)
+        // В реальному проекті потрібно використовувати справжню SHA-224 бібліотеку
+        let hash = simpleSHA256(data);
         
-        // Беремо перші 28 байт
-        let accountBytes = Array.tabulate<Nat8>(28, func(i : Nat) : Nat8 {
-            hash[i]
+        // Беремо перші 28 байт (SHA-224)
+        let h = Array.tabulate<Nat8>(28, func(i : Nat) : Nat8 {
+            if (i < hash.size()) { hash[i] } else { 0 }
         });
         
         // Генеруємо CRC32 checksum
-        let checksum = generateCRC32(accountBytes);
+        let checksum = generateCRC32(h);
         
-        // Об'єднуємо checksum + account bytes
-        let result = Array.append<Nat8>(checksum, accountBytes);
+        // Формуємо фінальний account identifier: CRC32(h) || h
+        let result = Array.append<Nat8>(checksum, h);
         
         // Конвертуємо в hex string
         let hexString = Array.foldLeft<Nat8, Text>(
             result,
             "",
             func(acc : Text, byte : Nat8) : Text {
-                let hexByte = Nat8.toText(byte);
-                let formattedHex = if (Nat8.toNat(byte) < 16) { "0" # hexByte } else { hexByte };
-                acc # formattedHex
+                let byteValue = Nat8.toNat(byte);
+                // Кожен байт повинен конвертуватися в рівно 2 hex символи
+                let high = byteValue / 16;
+                let low = byteValue % 16;
+                let highHex = if (high < 10) Nat.toText(high) else 
+                    switch(high) {
+                        case 10 { "a" }; case 11 { "b" }; case 12 { "c" };
+                        case 13 { "d" }; case 14 { "e" }; case 15 { "f" };
+                        case _ { "0" };
+                    };
+                let lowHex = if (low < 10) Nat.toText(low) else 
+                    switch(low) {
+                        case 10 { "a" }; case 11 { "b" }; case 12 { "c" };
+                        case 13 { "d" }; case 14 { "e" }; case 15 { "f" };
+                        case _ { "0" };
+                    };
+                acc # highHex # lowHex
             }
         );
         
         hexString
     };
     
-    // Функція для генерації CRC32 checksum
+    // Простий SHA-256 (для демонстрації - в продакшені потрібна справжня SHA-256)
+    private func simpleSHA256(data: [Nat8]) : [Nat8] {
+        // Це спрощена версія для демонстрації
+        // В реальному проекті використовуйте справжню SHA-256 бібліотеку
+        let hash = Array.tabulate<Nat8>(32, func(i : Nat) : Nat8 {
+            if (i < data.size()) { 
+                let temp = (Nat8.toNat(data[i]) + (i % 255)) % 255;
+                Nat8.fromNat(temp)
+            } else { 
+                Nat8.fromNat(i % 255) 
+            }
+        });
+        hash
+    };
+    
+    // Функція для генерації CRC32 checksum згідно з ISO 3309, ITU-T V.42
     private func generateCRC32(data: [Nat8]) : [Nat8] {
+        // CRC32 polynomial 0xEDB88320
         var crc : Nat32 = 0xFFFFFFFF;
         
         for (byte in data.vals()) {
-            crc := crc ^ (Nat32.fromNat(Nat8.toNat(byte)) << 24);
+            crc := crc ^ Nat32.fromNat(Nat8.toNat(byte));
             for (j in Iter.range(0, 7)) {
-                if ((crc & 0x80000000) != 0) {
-                    crc := (crc << 1) ^ 0x04C11DB7;
+                if ((crc & 1) != 0) {
+                    crc := (crc >> 1) ^ 0xEDB88320;
                 } else {
-                    crc := crc << 1;
+                    crc := crc >> 1;
                 };
             };
         };
         
+        crc := crc ^ 0xFFFFFFFF;
+        
+        // Конвертуємо в big-endian 4-byte array
         let result = Array.tabulate<Nat8>(4, func(i : Nat) : Nat8 {
             switch (i) {
                 case 0 { Nat8.fromNat(Nat32.toNat((crc >> 24) & 0xFF)) };
