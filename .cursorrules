@@ -217,20 +217,11 @@ This is a hackathon project built for ICP ecosystem, prioritizing rapid developm
 - **PATCH**: Bug fixes, minor improvements, documentation updates
 
 ### Version Update Rules
-1. **Always update VERSION file** when making significant changes
-2. **Update after major fixes** that affect core functionality
-3. **Start commit messages with version number** for releases
-4. **Document changes** in commit messages with version bumps
-
-### Current Version Guidelines
-- **0.x.x**: Pre-release/development phase
-- **1.x.x**: First stable release with complete wallet system
-- **Version in files**: `/VERSION` - single line with current version
-
-### When to Bump Version
-- ✅ **MINOR**: New features (wallet system fixes, new API methods)
-- ✅ **PATCH**: Bug fixes, UI improvements, documentation
-- ✅ **MAJOR**: Breaking changes to Candid interface, architecture changes
+1. **VERSION file is the single source of truth** - always update it first
+2. **Run `npm run update-version`** to sync version across all files
+3. **Start commit messages with version number** (e.g., `v0.6.2:`)
+4. **Version is automatically displayed in footer** from VERSION file
+5. **Never manually edit version in MainApp.tsx** - use update script
 
 ### Example Commit Messages with Versions
 ```

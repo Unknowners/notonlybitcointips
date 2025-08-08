@@ -1,6 +1,6 @@
 {
   "name": "notonlybitcointips",
-  "version": "1.0.0",
+  "version": "0.6.2",
   "description": "Donation Hub - ICP DApp with Internet Identity authentication",
   "scripts": {
     "dev": "dfx start --background && dfx deploy && cd frontend && npm run dev",
@@ -8,6 +8,7 @@
     "deploy:local": "dfx deploy",
     "deploy:mainnet": "./scripts/deploy-to-mainnet.sh",
     "update-ids": "node scripts/update-canister-ids.js",
+    "update-version": "node scripts/update-version.js",
     "clean": "dfx stop && dfx start --clean --background",
     "test": "echo \"No tests specified\" && exit 0"
   },
