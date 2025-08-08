@@ -476,7 +476,8 @@ export default function CampaignPage() {
           )}
         </div>
 
-        {/* ckBTC deposit */}
+        {/* ckBTC deposit (render only if BTC is accepted) */}
+        {(campaign.acceptedTokens || []).includes('BTC') && (
         <div className="mb-6 p-4 bg-gray-50 rounded-lg">
           <h3 className="font-semibold text-gray-900 mb-2">ckBTC Deposit</h3>
           {!isAuthenticated ? (
@@ -520,6 +521,7 @@ export default function CampaignPage() {
             </div>
           )}
         </div>
+        )}
 
         {/* Форма виведення коштів (тільки для власника кампанії) */}
         {isOwner && (
