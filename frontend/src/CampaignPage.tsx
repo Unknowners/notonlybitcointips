@@ -7,6 +7,7 @@ import { getAccountBalance } from "./ledger";
 import { icpToE8s, transferICP } from "./ledger";
 import { AuthClient } from '@dfinity/auth-client';
 import { getCkBtcDepositAddress } from './ckbtc';
+import { getCkBtcBalance, pollUpdateBalance, estimateWithdrawFee, withdrawCkBtc } from './ckbtc';
 import type { Campaign } from "./canisters/user_canister/user_canister.did.d.ts";
 
 export default function CampaignPage() {
@@ -43,6 +44,14 @@ export default function CampaignPage() {
   const [ckbtcAddress, setCkbtcAddress] = useState<string | null>(null);
   const [ckbtcLoading, setCkbtcLoading] = useState(false);
   const [ckbtcError, setCkbtcError] = useState<string | null>(null);
+  const [ckbtcBalance, setCkbtcBalance] = useState<bigint>(0n);
+  const [ckbtcRefreshing, setCkbtcRefreshing] = useState(false);
+  const [ckbtcWithdrawAddr, setCkbtcWithdrawAddr] = useState("");
+  const [ckbtcWithdrawAmount, setCkbtcWithdrawAmount] = useState("");
+  const [ckbtcFeeInfo, setCkbtcFeeInfo] = useState<{ total: bigint; minter: bigint; bitcoin: bigint } | null>(null);
+  const [ckbtcWithdrawing, setCkbtcWithdrawing] = useState(false);
+  const [ckbtcWithdrawError, setCkbtcWithdrawError] = useState<string | null>(null);
+  const [ckbtcWithdrawOk, setCkbtcWithdrawOk] = useState<string | null>(null);
 
   // Завантажуємо кампанію при зміні ID
   useEffect(() => {
@@ -176,6 +185,66 @@ export default function CampaignPage() {
       setCkbtcError(e?.message || String(e));
     } finally {
       setCkbtcLoading(false);
+    }
+  };
+
+  const refreshCkBtcBalance = async () => {
+    if (!authClientRef.current || !campaign) return;
+    setCkbtcRefreshing(true);
+    try {
+      const identity = authClientRef.current.getIdentity();
+      const owner = identity.getPrincipal();
+      const bal = await getCkBtcBalance(identity, owner);
+      setCkbtcBalance(bal);
+    } catch (e) {
+      console.warn('ckBTC balance error', e);
+    } finally {
+      setCkbtcRefreshing(false);
+    }
+  };
+
+  const pollCkBtcCredit = async () => {
+    if (!authClientRef.current) return;
+    const identity = authClientRef.current.getIdentity();
+    await pollUpdateBalance(identity);
+    await refreshCkBtcBalance();
+  };
+
+  const onEstimateCkBtc = async () => {
+    if (!authClientRef.current) return;
+    try {
+      const identity = authClientRef.current.getIdentity();
+      const amount = parseFloat(ckbtcWithdrawAmount || '0');
+      if (isNaN(amount) || amount <= 0) return;
+      const e8s = BigInt(Math.floor(amount * 100_000_000));
+      const fees = await estimateWithdrawFee(identity, ckbtcWithdrawAddr, e8s);
+      setCkbtcFeeInfo(fees);
+    } catch (e: any) {
+      setCkbtcWithdrawError(e?.message || String(e));
+    }
+  };
+
+  const onWithdrawCkBtc = async () => {
+    if (!authClientRef.current) return;
+    setCkbtcWithdrawing(true);
+    setCkbtcWithdrawError(null);
+    setCkbtcWithdrawOk(null);
+    try {
+      const identity = authClientRef.current.getIdentity();
+      const amount = parseFloat(ckbtcWithdrawAmount || '0');
+      if (isNaN(amount) || amount <= 0) throw new Error('Invalid amount');
+      const e8s = BigInt(Math.floor(amount * 100_000_000));
+      const res = await withdrawCkBtc(identity, ckbtcWithdrawAddr, e8s);
+      if (res.ok !== undefined) {
+        setCkbtcWithdrawOk(`Submitted at block ${res.ok.toString()}`);
+        await refreshCkBtcBalance();
+      } else {
+        setCkbtcWithdrawError(res.err || 'Withdraw failed');
+      }
+    } catch (e: any) {
+      setCkbtcWithdrawError(e?.message || String(e));
+    } finally {
+      setCkbtcWithdrawing(false);
     }
   };
 
@@ -425,9 +494,29 @@ export default function CampaignPage() {
               {ckbtcAddress && (
                 <div className="bg-white p-2 rounded border font-mono text-sm break-all">{ckbtcAddress}</div>
               )}
+              <div className="flex items-center gap-2 mt-2">
+                <button className="px-3 py-1 bg-blue-600 text-white rounded text-sm" onClick={refreshCkBtcBalance} disabled={ckbtcRefreshing}>Refresh Balance</button>
+                <button className="px-3 py-1 bg-green-600 text-white rounded text-sm" onClick={pollCkBtcCredit} disabled={ckbtcRefreshing}>Poll Credit</button>
+                <div className="text-sm text-gray-700">Balance: {formatBalance(ckbtcBalance)} ckBTC</div>
+              </div>
               <p className="text-xs text-gray-500">
                 Send BTC from your exchange/wallet to this address. After confirmations, ckBTC will appear on the campaign balance.
               </p>
+
+              <div className="mt-3 border-t pt-3">
+                <div className="font-semibold text-gray-800 mb-1">Withdraw ckBTC to BTC address</div>
+                <input className="w-full px-3 py-2 border rounded mb-2" placeholder="BTC address" value={ckbtcWithdrawAddr} onChange={e=>setCkbtcWithdrawAddr(e.target.value)} />
+                <div className="flex items-center gap-2">
+                  <input className="flex-1 px-3 py-2 border rounded" placeholder="Amount (BTC)" value={ckbtcWithdrawAmount} onChange={e=>setCkbtcWithdrawAmount(e.target.value)} />
+                  <button className="px-3 py-2 bg-gray-700 text-white rounded" type="button" onClick={onEstimateCkBtc}>Estimate Fee</button>
+                  <button className="px-3 py-2 bg-gray-900 text-white rounded" type="button" onClick={onWithdrawCkBtc} disabled={ckbtcWithdrawing}>{ckbtcWithdrawing ? 'Withdrawing...' : 'Withdraw'}</button>
+                </div>
+                {ckbtcFeeInfo && (
+                  <div className="text-xs text-gray-600 mt-1">Fee: total {formatBalance(ckbtcFeeInfo.total)} (minter {formatBalance(ckbtcFeeInfo.minter)}, network {formatBalance(ckbtcFeeInfo.bitcoin)})</div>
+                )}
+                {ckbtcWithdrawError && <div className="text-red-600 text-sm mt-1">{ckbtcWithdrawError}</div>}
+                {ckbtcWithdrawOk && <div className="text-green-600 text-sm mt-1">{ckbtcWithdrawOk}</div>}
+              </div>
             </div>
           )}
         </div>
