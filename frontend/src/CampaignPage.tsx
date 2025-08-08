@@ -53,6 +53,21 @@ export default function CampaignPage() {
         setCampaign(campaignData);
         console.log('Using account ID from campaign:', campaignData.accountId);
         
+        // Fallback: якщо accountId undefined, отримуємо його окремо
+        if (!campaignData.accountId) {
+          console.log('Account ID not found in campaign, fetching separately...');
+          try {
+            const separateAccountId = await user_canister.getCampaignAccountId(id);
+            console.log('Separate account ID:', separateAccountId);
+            if (separateAccountId) {
+              // Оновлюємо кампанію з account ID
+              setCampaign({...campaignData, accountId: separateAccountId});
+            }
+          } catch (accountError) {
+            console.error('Error getting separate account ID:', accountError);
+          }
+        }
+        
         // Перевіряємо чи поточний користувач є власником
         try {
           const currentUser = await user_canister.whoami();
