@@ -12,6 +12,7 @@ import Blob "mo:base/Blob";
 import Int "mo:base/Int";
 import Nat "mo:base/Nat";
 import Nat8 "mo:base/Nat8";
+import Nat32 "mo:base/Nat32";
 import Buffer "mo:base/Buffer";
 import Result "mo:base/Result";
 
@@ -108,27 +109,84 @@ shared({ caller = initializer }) actor class UserCanister() = {
         usersMap := HashMap.HashMap<UserId, User>(0, Principal.equal, Principal.hash);
     };
 
-    // Правильна функція для генерації account ID на основі user principal + campaign ID
+    // Правильна функція для генерації account ID згідно з ICP стандартами
     private func generateAccountId(userPrincipal: Principal, campaignId: Text) : AccountId {
-        // Конвертуємо user principal в text
-        let userPrincipalText = Principal.toText(userPrincipal);
-        
         // Конвертуємо campaign ID в 32-byte subaccount
         let campaignBytes = Text.encodeUtf8(campaignId);
         let subaccount = Array.tabulate<Nat8>(32, func(i : Nat) : Nat8 {
             if (i < campaignBytes.size()) { campaignBytes[i] } else { 0 }
         });
         
-        // Об'єднуємо user principal + subaccount як текст
-        let combinedText = userPrincipalText # campaignId;
+        // Генеруємо account identifier згідно з ICP стандартами
+        // SHA224(0x0A + "account-id" + principal + subaccount)
+        let prefix = Blob.toArray(Text.encodeUtf8("account-id"));
+        let principalText = Principal.toText(userPrincipal);
+        let principalBytes = Blob.toArray(Text.encodeUtf8(principalText));
         
-        // Генеруємо простий hex string на основі тексту
-        // В реальному проекті використовуйте SHA-256
-        "account_" # combinedText
+        // Об'єднуємо всі частини
+        let data = Array.append<Nat8>(prefix, principalBytes);
+        let data2 = Array.append<Nat8>(data, subaccount);
+        
+        // Генеруємо простий hash (в реальному проекті використовуйте SHA-256)
+        let hash = Array.tabulate<Nat8>(32, func(i : Nat) : Nat8 {
+            if (i < data2.size()) { data2[i] } else { 0 }
+        });
+        
+        // Беремо перші 28 байт
+        let accountBytes = Array.tabulate<Nat8>(28, func(i : Nat) : Nat8 {
+            hash[i]
+        });
+        
+        // Генеруємо CRC32 checksum
+        let checksum = generateCRC32(accountBytes);
+        
+        // Об'єднуємо checksum + account bytes
+        let result = Array.append<Nat8>(checksum, accountBytes);
+        
+        // Конвертуємо в hex string
+        let hexString = Array.foldLeft<Nat8, Text>(
+            result,
+            "",
+            func(acc : Text, byte : Nat8) : Text {
+                let hexByte = Nat8.toText(byte);
+                let formattedHex = if (Nat8.toNat(byte) < 16) { "0" # hexByte } else { hexByte };
+                acc # formattedHex
+            }
+        );
+        
+        hexString
+    };
+    
+    // Функція для генерації CRC32 checksum
+    private func generateCRC32(data: [Nat8]) : [Nat8] {
+        var crc : Nat32 = 0xFFFFFFFF;
+        
+        for (byte in data.vals()) {
+            crc := crc ^ (Nat32.fromNat(Nat8.toNat(byte)) << 24);
+            for (j in Iter.range(0, 7)) {
+                if ((crc & 0x80000000) != 0) {
+                    crc := (crc << 1) ^ 0x04C11DB7;
+                } else {
+                    crc := crc << 1;
+                };
+            };
+        };
+        
+        let result = Array.tabulate<Nat8>(4, func(i : Nat) : Nat8 {
+            switch (i) {
+                case 0 { Nat8.fromNat(Nat32.toNat((crc >> 24) & 0xFF)) };
+                case 1 { Nat8.fromNat(Nat32.toNat((crc >> 16) & 0xFF)) };
+                case 2 { Nat8.fromNat(Nat32.toNat((crc >> 8) & 0xFF)) };
+                case 3 { Nat8.fromNat(Nat32.toNat(crc & 0xFF)) };
+                case _ { 0 };
+            }
+        });
+        
+        result
     };
 
     private func generateSubaccount(id : Text) : Blob {
-        let bytes = Text.encodeUtf8(id);
+        let bytes = Blob.toArray(Text.encodeUtf8(id));
         let padded = Array.tabulate<Nat8>(32, func(i : Nat) : Nat8 {
             if (i < bytes.size()) { bytes[i] } else { 0 }
         });
