@@ -4,6 +4,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { user_canister } from "./canisters/index.js";
 import { getSimulatedBalance, formatBalance } from "./ledger";
 import { getAccountBalance } from "./ledger";
+import { icpToE8s, transferICP } from "./ledger";
+import { AuthClient } from '@dfinity/auth-client';
 import type { Campaign } from "./canisters/user_canister/user_canister.did.d.ts";
 
 export default function CampaignPage() {
@@ -26,6 +28,15 @@ export default function CampaignPage() {
   
   // Share state
   const [isOwner, setIsOwner] = useState(false);
+
+  // Donation (Send directly with II)
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [donateAmount, setDonateAmount] = useState("");
+  const [donateMemo, setDonateMemo] = useState("");
+  const [donateLoading, setDonateLoading] = useState(false);
+  const [donateError, setDonateError] = useState<string | null>(null);
+  const [donateSuccess, setDonateSuccess] = useState<{ blockHeight?: bigint } | null>(null);
+  const authClientRef = useRef<AuthClient | null>(null);
 
   // Завантажуємо кампанію при зміні ID
   useEffect(() => {
@@ -113,6 +124,69 @@ export default function CampaignPage() {
       console.error('Error loading campaign:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Initialize AuthClient to detect authentication state for donation
+  useEffect(() => {
+    (async () => {
+      try {
+        const ac = await AuthClient.create({
+          idleOptions: { disableDefaultIdleCallback: true, disableIdle: true }
+        });
+        authClientRef.current = ac;
+        const authed = await ac.isAuthenticated();
+        setIsAuthenticated(authed);
+      } catch (e) {
+        console.warn('AuthClient init failed', e);
+      }
+    })();
+  }, []);
+
+  const handleLoginForDonation = async () => {
+    if (!authClientRef.current) return;
+    try {
+      await authClientRef.current.login({
+        identityProvider: 'https://identity.ic0.app',
+        onSuccess: async () => {
+          const authed = await authClientRef.current!.isAuthenticated();
+          setIsAuthenticated(authed);
+        }
+      });
+    } catch (e) {
+      console.error('Login failed', e);
+    }
+  };
+
+  const handleDonate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!campaign) return;
+    setDonateError(null);
+    setDonateSuccess(null);
+    setDonateLoading(true);
+    try {
+      const amount = parseFloat(donateAmount);
+      if (isNaN(amount) || amount <= 0) {
+        setDonateError('Please enter a valid amount');
+        return;
+      }
+      // Optional memo currently unused in transferICP stub; kept for future real transfer
+      const e8s = icpToE8s(amount);
+      const identity = authClientRef.current?.getIdentity();
+      const res = await transferICP(campaign.accountId, e8s, undefined, identity);
+      if (res.success) {
+        setDonateSuccess({ blockHeight: res.blockHeight });
+        setDonateAmount("");
+        // Refresh balance shortly after
+        setTimeout(() => loadBalance(campaign.accountId!), 1000);
+      } else {
+        setDonateError(res.error || 'Transfer failed');
+      }
+    } catch (err) {
+      console.error('Donate error:', err);
+      setDonateError('Network error during transfer');
+    } finally {
+      setDonateLoading(false);
     }
   };
 
@@ -256,6 +330,60 @@ export default function CampaignPage() {
             </p>
           </div>
         )}
+
+        {/* Send directly with II */}
+        <div className="mb-6 p-4 bg-indigo-50 rounded-lg">
+          <h3 className="font-semibold text-indigo-900 mb-2">Send directly with Internet Identity</h3>
+          {!isAuthenticated ? (
+            <button
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md"
+              onClick={handleLoginForDonation}
+            >
+              Sign in to Donate
+            </button>
+          ) : (
+            <form onSubmit={handleDonate} className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-indigo-800 mb-1">Amount (ICP)</label>
+                <input
+                  type="number"
+                  step="0.00000001"
+                  min="0"
+                  value={donateAmount}
+                  onChange={(e) => setDonateAmount(e.target.value)}
+                  placeholder="0.00000000"
+                  className="w-full px-3 py-2 border border-indigo-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-indigo-800 mb-1">Memo (optional)</label>
+                <input
+                  type="text"
+                  value={donateMemo}
+                  onChange={(e) => setDonateMemo(e.target.value)}
+                  placeholder="Thanks for your work!"
+                  className="w-full px-3 py-2 border border-indigo-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              {donateError && (
+                <div className="text-red-600 text-sm bg-red-50 p-2 rounded">{donateError}</div>
+              )}
+              {donateSuccess && (
+                <div className="text-green-600 text-sm bg-green-50 p-2 rounded">
+                  Donation sent{donateSuccess.blockHeight ? ` (block ${donateSuccess.blockHeight.toString()})` : ''}!
+                </div>
+              )}
+              <button
+                type="submit"
+                disabled={donateLoading}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold py-2 px-4 rounded-md transition-colors"
+              >
+                {donateLoading ? 'Sending...' : 'Send with II'}
+              </button>
+            </form>
+          )}
+        </div>
 
         {/* Форма виведення коштів (тільки для власника кампанії) */}
         {isOwner && (
