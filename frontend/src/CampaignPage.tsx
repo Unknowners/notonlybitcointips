@@ -152,20 +152,7 @@ export default function CampaignPage() {
     })();
   }, []);
 
-  const handleLoginForDonation = async () => {
-    if (!authClientRef.current) return;
-    try {
-      await authClientRef.current.login({
-        identityProvider: 'https://identity.ic0.app',
-        onSuccess: async () => {
-          const authed = await authClientRef.current!.isAuthenticated();
-          setIsAuthenticated(authed);
-        }
-      });
-    } catch (e) {
-      console.error('Login failed', e);
-    }
-  };
+
 
   const loadCkBtcAddress = async () => {
     if (!authClientRef.current || !campaign) return;

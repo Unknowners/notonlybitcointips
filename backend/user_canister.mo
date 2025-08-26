@@ -96,7 +96,7 @@ shared({ caller = initializer }) persistent actor class UserCanister() = {
 
     public query func userExists() : async Bool {
         switch (usersMap.get(initializer)) {
-            case (?user) { return true; };
+            case (?_) { return true; };
             case null { return false; };
         };
     };
@@ -141,7 +141,7 @@ shared({ caller = initializer }) persistent actor class UserCanister() = {
     };
 
     // Функція для перевірки балансу кампанії (заглушка для майбутнього)
-    private func getCampaignBalance(_accountId: AccountId) : async Nat64 {
+    private func _getCampaignBalance(_accountId: AccountId) : async Nat64 {
         // TODO: Реальна перевірка балансу через ICP Ledger
         // Поки що повертаємо 0 для тестування
         return 0;
