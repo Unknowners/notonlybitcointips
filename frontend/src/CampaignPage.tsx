@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { user_canister } from "./canisters/index.js";
 import { getSimulatedBalance, formatBalance } from "./ledger";
 import { getAccountBalance } from "./ledger";
-import { icpToE8s, transferICP } from "./ledger";
+
 import { AuthClient } from '@dfinity/auth-client';
 import { getCkBtcDepositAddress } from './ckbtc';
 import { getCkBtcBalance, pollUpdateBalance, estimateWithdrawFee, withdrawCkBtc } from './ckbtc';
@@ -32,13 +32,8 @@ export default function CampaignPage() {
   // Share state
   const [isOwner, setIsOwner] = useState(false);
 
-  // Donation (Send directly with II)
+  // Authentication state for ckBTC operations
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [donateAmount, setDonateAmount] = useState("");
-  const [donateMemo, setDonateMemo] = useState("");
-  const [donateLoading, setDonateLoading] = useState(false);
-  const [donateError, setDonateError] = useState<string | null>(null);
-  const [donateSuccess, setDonateSuccess] = useState<{ blockHeight?: bigint } | null>(null);
   const authClientRef = useRef<AuthClient | null>(null);
 
   // ckBTC state
@@ -255,38 +250,7 @@ export default function CampaignPage() {
     }
   };
 
-  const handleDonate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!campaign) return;
-    setDonateError(null);
-    setDonateSuccess(null);
-    setDonateLoading(true);
-    try {
-      const amount = parseFloat(donateAmount);
-      if (isNaN(amount) || amount <= 0) {
-        setDonateError('Please enter a valid amount');
-        return;
-      }
-      // Optional memo currently unused in transferICP stub; kept for future real transfer
-      const e8s = icpToE8s(amount);
-      const identity = authClientRef.current?.getIdentity();
-      const memoNat = donateMemo ? BigInt(Math.min(Number.MAX_SAFE_INTEGER, donateMemo.length)) : 0n;
-      const res = await transferICP(campaign.accountId, e8s, undefined, identity, memoNat);
-      if (res.success) {
-        setDonateSuccess({ blockHeight: res.blockHeight });
-        setDonateAmount("");
-        // Refresh balance shortly after
-        setTimeout(() => loadBalance(campaign.accountId!), 1000);
-      } else {
-        setDonateError(res.error || 'Transfer failed');
-      }
-    } catch (err) {
-      console.error('Donate error:', err);
-      setDonateError('Network error during transfer');
-    } finally {
-      setDonateLoading(false);
-    }
-  };
+
 
   const loadBalance = async (accountId: string) => {
     if (!accountId) return;
@@ -429,9 +393,20 @@ export default function CampaignPage() {
         {campaign.accountId && (
           <div className="mb-6 p-4 bg-blue-50 rounded-lg">
             <h3 className="font-semibold text-blue-900 mb-2">Donation Address</h3>
-            <p className="text-sm text-gray-600 break-all font-mono mb-2 bg-gray-100 p-2 rounded">
-              {campaign.accountId}
-            </p>
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-sm text-gray-600 break-all font-mono flex-1 bg-gray-100 p-2 rounded">
+                {campaign.accountId}
+              </p>
+              <button
+                onClick={() => navigator.clipboard.writeText(campaign.accountId)}
+                className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                title="Copy address"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </button>
+            </div>
             <div className="flex justify-center">
               <QRCodeSVG value={campaign.accountId} size={128} bgColor="#fff" fgColor="#1e293b" className="rounded-md shadow-md" />
             </div>
@@ -441,58 +416,23 @@ export default function CampaignPage() {
           </div>
         )}
 
-        {/* Send directly with II */}
+        {/* Check Balance on NNS Dashboard */}
         <div className="mb-6 p-4 bg-indigo-50 rounded-lg">
-          <h3 className="font-semibold text-indigo-900 mb-2">Send directly with Internet Identity</h3>
-          {!isAuthenticated ? (
-            <button
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md"
-              onClick={handleLoginForDonation}
-            >
-              Sign in to Donate
-            </button>
-          ) : (
-            <form onSubmit={handleDonate} className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium text-indigo-800 mb-1">Amount (ICP)</label>
-                <input
-                  type="number"
-                  step="0.00000001"
-                  min="0"
-                  value={donateAmount}
-                  onChange={(e) => setDonateAmount(e.target.value)}
-                  placeholder="0.00000000"
-                  className="w-full px-3 py-2 border border-indigo-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-indigo-800 mb-1">Memo (optional)</label>
-                <input
-                  type="text"
-                  value={donateMemo}
-                  onChange={(e) => setDonateMemo(e.target.value)}
-                  placeholder="Thanks for your work!"
-                  className="w-full px-3 py-2 border border-indigo-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-              {donateError && (
-                <div className="text-red-600 text-sm bg-red-50 p-2 rounded">{donateError}</div>
-              )}
-              {donateSuccess && (
-                <div className="text-green-600 text-sm bg-green-50 p-2 rounded">
-                  Donation sent{donateSuccess.blockHeight ? ` (block ${donateSuccess.blockHeight.toString()})` : ''}!
-                </div>
-              )}
-              <button
-                type="submit"
-                disabled={donateLoading}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold py-2 px-4 rounded-md transition-colors"
-              >
-                {donateLoading ? 'Sending...' : 'Send with II'}
-              </button>
-            </form>
-          )}
+          <h3 className="font-semibold text-indigo-900 mb-2">Check Balance on NNS Dashboard</h3>
+          <p className="text-sm text-indigo-700 mb-3">
+            View your campaign balance, transaction history, and account details on the official ICP dashboard.
+          </p>
+          <a
+            href={`https://dashboard.internetcomputer.org/account/${campaign.accountId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+            Open NNS Dashboard
+          </a>
         </div>
 
         {/* ckBTC deposit (render only if BTC is accepted) */}
@@ -512,7 +452,18 @@ export default function CampaignPage() {
               </button>
               {ckbtcError && <div className="text-red-600 text-sm">{ckbtcError}</div>}
               {ckbtcAddress && (
-                <div className="bg-white p-2 rounded border font-mono text-sm break-all">{ckbtcAddress}</div>
+                <div className="flex items-center gap-2">
+                  <div className="bg-white p-2 rounded border font-mono text-sm break-all flex-1">{ckbtcAddress}</div>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(ckbtcAddress)}
+                    className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                    title="Copy BTC address"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                </div>
               )}
               <div className="flex items-center gap-2 mt-2">
                 <button className="px-3 py-1 bg-blue-600 text-white rounded text-sm" onClick={refreshCkBtcBalance} disabled={ckbtcRefreshing}>Refresh Balance</button>

@@ -28,6 +28,7 @@ This is a decentralized crowdfunding DApp built on Internet Computer Protocol (I
   ├── CampaignPage.tsx      # Individual campaign pages
   ├── account.ts            # Account ID generation (ICP standard)
   ├── ledger.ts             # ICP Ledger integration
+  ├── ckbtc.ts              # ckBTC integration and operations
   └── canisters/            # Canister type definitions
 ```
 
@@ -42,16 +43,17 @@ where h = SHA224("\x0Aaccount-id" || user_principal || campaign_subaccount)
 
 - **Frontend**: `account.ts` - Standards-compliant ICP account generation
 - **Backend**: `generateAccountId()` function in user_canister.mo
-- **Purpose**: Each campaign gets its own wallet for receiving ICP donations
+- **Purpose**: Each campaign gets its own wallet for receiving ICP and ckBTC donations
+- **Multi-token support**: Separate balance tracking for ICP and ckBTC
 
 ### 2. Campaign Lifecycle
 1. **Authentication**: Internet Identity login → Principal ID
 2. **User Registration**: `createUser(name, email?)` 
 3. **Campaign Creation**: `createCampaign(name, description, acceptedTokens[])`
 4. **Account Generation**: Automatic unique account ID creation
-5. **Donations**: Direct ICP transfers to campaign account
-6. **Balance Tracking**: Real-time balance updates every 10 seconds
-7. **Withdrawal**: Campaign owners can withdraw to personal wallets
+5. **Donations**: Direct ICP and ckBTC transfers to campaign account
+6. **Balance Tracking**: Real-time balance updates every 10 seconds for all tokens
+7. **Withdrawal**: Campaign owners can withdraw to personal wallets (ICP/ckBTC)
 
 ### 3. Data Types (Motoko)
 ```motoko
@@ -67,7 +69,7 @@ type Campaign = {
     name: Text;
     description: Text;
     owner: UserId;        // Principal
-    acceptedTokens: [Text];
+    acceptedTokens: [Text]; // ["ICP", "ckBTC"]
     subaccount: Blob;     // 32-byte campaign identifier
     accountId: AccountId; // Generated ICP account
     createdAt: Nat64;
@@ -112,9 +114,11 @@ export async function generateAccountId(userPrincipal: string, campaignId: strin
 ```
 
 ### Balance Tracking Strategy
-- **Query calls**: Frontend polls balance every 10 seconds
+- **Query calls**: Frontend polls balance every 10 seconds for all tokens
 - **Update calls**: Only for withdrawals (expensive)
 - **Error handling**: Graceful fallback to 0 balance on errors
+- **Multi-token support**: Separate balance tracking for ICP and ckBTC
+- **ckBTC integration**: Real-time ckBTC balance updates through ckBTC canister
 
 ### Security Considerations
 1. **Principal validation**: Always verify caller identity
@@ -145,6 +149,8 @@ VITE_DFX_NETWORK=local  # or ic for mainnet
 - **Internet Identity**: Local testing with temporary identities
 - **Account generation**: Verify hex format and uniqueness
 - **Balance simulation**: Use getRealAccountBalance vs getSimulatedBalance
+- **ckBTC testing**: Test ckBTC deposit/withdrawal flows
+- **Multi-token balance**: Verify separate balance tracking for ICP and ckBTC
 
 ## DEPLOYMENT
 - **Local**: `dfx deploy` - тестування тільки локально
@@ -175,11 +181,16 @@ const result = await actor.createCampaign(name, description, tokens);
 ```typescript
 useEffect(() => {
   const interval = setInterval(async () => {
-    const balance = await getAccountBalance(accountId);
-    setBalance(balance);
+    // ICP balance
+    const icpBalance = await getAccountBalance(accountId);
+    setIcpBalance(icpBalance);
+    
+    // ckBTC balance
+    const ckBtcBalance = await getCkBtcBalance(identity, owner, subaccount);
+    setCkBtcBalance(ckBtcBalance);
   }, 10000);
   return () => clearInterval(interval);
-}, [accountId]);
+}, [accountId, identity, owner, subaccount]);
 ```
 
 ### Error Handling
@@ -196,19 +207,42 @@ try {
 }
 ```
 
+### ckBTC Integration
+```typescript
+// Get ckBTC deposit address
+const depositAddress = await getCkBtcDepositAddress(identity, owner, subaccount);
+
+// Check ckBTC balance
+const balance = await getCkBtcBalance(identity, owner, subaccount);
+
+// Withdraw ckBTC
+const result = await withdrawCkBtc(identity, address, amount);
+if (result.ok) {
+  console.log('Withdrawal successful:', result.ok);
+} else {
+  console.error('Withdrawal failed:', result.err);
+}
+```
+
 ## PERFORMANCE CONSIDERATIONS
 1. **Query calls**: Prefer query over update for read operations
 2. **Batch updates**: Group related operations when possible
 3. **Caching**: Cache campaign data and balance info appropriately
 4. **Bundle size**: Monitor frontend bundle size with Vite analyzer
+5. **ckBTC polling**: Optimize ckBTC balance updates to avoid excessive canister calls
+6. **Multi-token balance**: Parallel balance fetching for better performance
 
 ## FUTURE ROADMAP
-- Real ICP Ledger integration (currently simulated)
-- Multi-token support (BTC, ETH, USDT)
-- Campaign analytics and statistics
-- Email/SMS notifications for donations
-- Public API for balance verification
-- Mobile responsive improvements
+- **ckBTC Integration**: Full Bitcoin support through ckBTC canister
+- **Real ICP Ledger integration**: Currently implemented, further optimizations
+- **Multi-token support**: SNS tokens, ICRC-2, wrapped tokens (wETH, wBTC)
+- **DeFi Integration**: Liquidity pools, yield farming, staking
+- **Campaign analytics and statistics**: Real-time dashboard, donor analytics
+- **Email/SMS notifications**: Automated donation alerts
+- **Public API**: Balance verification and webhook system
+- **Mobile responsive improvements**: Native mobile apps, mobile SDK
+- **Cross-chain bridges**: Integration with other blockchains
+- **Layer 2 solutions**: ICP Layer 2 scaling
 
 This is a hackathon project built for ICP ecosystem, prioritizing rapid development while maintaining security and proper IC integration patterns.
 
@@ -226,6 +260,9 @@ This is a hackathon project built for ICP ecosystem, prioritizing rapid developm
 3. **Start commit messages with version number** (e.g., `v0.6.2:`)
 4. **Version is automatically displayed in footer** from VERSION file
 5. **Never manually edit version in MainApp.tsx** - use update script
+6. **PATCH version increments**: Can go beyond 9 (10, 11, 12, etc.) - no automatic MINOR bump
+7. **MINOR version changes**: Only when adding new features or significant improvements
+8. **MAJOR version**: Manual changes only by user for breaking changes
 
 ### Git Tag Policy
 - **When**: create tags only on explicit user request after a stable commit on `main`
