@@ -3,6 +3,17 @@ import { QRCodeSVG } from "qrcode.react";
 import { AuthClient } from '@dfinity/auth-client';
 import { createActor } from "./canisters/index.js";
 import { getSimulatedBalance, formatBalance, getAccountBalance, transferICP } from "./ledger";
+
+// Функція для конвертації hex в bytes
+function hexToBytes(hex: string): Uint8Array {
+  const clean = hex.trim().toLowerCase().replace(/^0x/, '');
+  if (clean.length % 2 !== 0) throw new Error('Invalid hex string length');
+  const bytes = new Uint8Array(clean.length / 2);
+  for (let i = 0; i < clean.length; i += 2) {
+    bytes[i / 2] = parseInt(clean.slice(i, i + 2), 16);
+  }
+  return bytes;
+}
 import AlphaWarning from "./components/AlphaWarning";
 
 // Типи для кампаній
@@ -397,11 +408,22 @@ export default function MainApp() {
       // Конвертуємо ICP в e8s
       const amountE8s = BigInt(Math.floor(withdrawAmount * 100_000_000));
       
+      // Конвертуємо account ID в subaccount для withdraw
+      const accountIdBytes = hexToBytes(campaign.accountId);
+      console.log('🔍 Withdraw details:', {
+        campaignId: campaign.id,
+        accountId: campaign.accountId,
+        accountIdBytes: Array.from(accountIdBytes),
+        withdrawAmount,
+        amountE8s: amountE8s.toString(),
+        targetAddress: withdrawState.address
+      });
+      
       // Виконуємо transfer через ICP Ledger
       const result = await transferICP(
         withdrawState.address,
         amountE8s,
-        undefined, // fromSubaccount - буде використовуватися account ID кампанії
+        accountIdBytes, // fromSubaccount - account ID кампанії
         authState.authClient?.getIdentity(),
         BigInt(Date.now()) // memo
       );
@@ -790,7 +812,7 @@ export default function MainApp() {
           ICP - WCHL25
         </a>
         <br />
-        Version 0.8.12
+        Version 0.8.13
       </div>
     </div>
   );

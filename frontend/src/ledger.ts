@@ -150,6 +150,8 @@ export async function transferICP(
 ): Promise<{ success: boolean; blockHeight?: bigint; error?: string }> {
   try {
     const host = (isMainnet || isICPNinja) ? 'https://ic0.app' : 'http://127.0.0.1:4943';
+    console.log('🔍 transferICP - Network detection:', { isMainnet, isICPNinja, host });
+    console.log('🔍 transferICP - Parameters:', { to, amount: amount.toString(), fromSubaccount: fromSubaccount ? Array.from(fromSubaccount) : undefined, memo: memo?.toString() });
 
     const agent = new HttpAgent({ host, identity });
     if (!isMainnet && !isICPNinja) {
@@ -174,13 +176,17 @@ export async function transferICP(
       created_at_time: [{ timestamp_nanos: nowNanos }]
     };
 
+    console.log('🔍 transferICP - Transfer args:', args);
+
     const res = await (ledger as any).transfer(args);
+    console.log('🔍 transferICP - Transfer response:', res);
+    
     if ('Ok' in res) {
       return { success: true, blockHeight: BigInt(res.Ok) };
     }
     return { success: false, error: formatTransferError(res.Err) };
   } catch (error) {
-    console.error('Error transferring ICP:', error);
+    console.error('❌ Error transferring ICP:', error);
     return { success: false, error: (error as Error).toString() };
   }
 }
