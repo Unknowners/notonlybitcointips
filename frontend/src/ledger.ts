@@ -61,10 +61,32 @@ export async function getAccountBalance(accountId: string): Promise<bigint> {
       console.log('Using host:', host);
     }
     
-    // Використовуємо реальний HTTP запит до ICP Ledger
-    const balance = await getRealAccountBalance(accountId);
-    console.log('Real balance:', balance);
-    return balance;
+    // Спочатку пробуємо через canister
+    try {
+      const balance = await getRealAccountBalance(accountId);
+      if (balance > 0n) {
+        console.log('✅ Balance via canister:', balance);
+        return balance;
+      }
+    } catch (canisterError) {
+      console.log('⚠️ Canister method failed, trying HTTP API...');
+    }
+    
+    // Якщо canister не спрацював, пробуємо HTTP API
+    if (isMainnet || isICPNinja) {
+      try {
+        const httpBalance = await getAccountBalanceViaHttp(accountId);
+        if (httpBalance > 0n) {
+          console.log('✅ Balance via HTTP API:', httpBalance);
+          return httpBalance;
+        }
+      } catch (httpError) {
+        console.log('⚠️ HTTP API also failed');
+      }
+    }
+    
+    console.log('❌ All methods failed, returning 0');
+    return 0n;
     
   } catch (error) {
     console.error('Error getting account balance:', error);
@@ -76,6 +98,8 @@ export async function getAccountBalance(accountId: string): Promise<bigint> {
 export async function getRealAccountBalance(accountId: string): Promise<bigint> {
   try {
     const host = (isMainnet || isICPNinja) ? 'https://ic0.app' : 'http://127.0.0.1:4943';
+    console.log('🔍 getRealAccountBalance - Network detection:', { isMainnet, isICPNinja, host });
+    console.log('🔍 Account ID:', accountId);
     
     const agent = new HttpAgent({ host });
     if (!isMainnet && !isICPNinja) {
@@ -86,13 +110,16 @@ export async function getRealAccountBalance(accountId: string): Promise<bigint> 
       canisterId: ledgerCanisterId,
     });
 
+    console.log('🔍 Querying ledger account_balance_dfx for:', accountId, 'via', host);
     const res = await (ledger as any).account_balance_dfx({ account: accountId });
+    console.log('🔍 Ledger response:', res);
     
     // res: { e8s: nat64 }
     const e8s = BigInt(res?.e8s ?? 0);
+    console.log('🔍 Parsed balance (e8s):', e8s.toString());
     return e8s;
   } catch (error) {
-    console.error('Error getting real account balance:', error);
+    console.error('❌ Error getting real account balance:', error);
     return 0n;
   }
 }
@@ -166,6 +193,52 @@ function hexToBytes(hex: string): Uint8Array {
     bytes[i / 2] = parseInt(clean.slice(i, i + 2), 16);
   }
   return bytes;
+}
+
+// Функція для отримання балансу через HTTP API (альтернатива для mainnet)
+export async function getAccountBalanceViaHttp(accountId: string): Promise<bigint> {
+  try {
+    if (!isMainnet && !isICPNinja) {
+      console.log('🔍 HTTP API only works on mainnet, skipping...');
+      return 0n;
+    }
+
+    const url = `https://ic0.app/api/v2/canister/${ledgerCanisterId}/query`;
+    const requestBody = {
+      request_type: 'query',
+      sender: '000000000000000000000000000000000000000000000000000000000000000000',
+      canister_id: ledgerCanisterId,
+      method_name: 'account_balance_dfx',
+      arg: btoa(JSON.stringify({ account: accountId })),
+      ingress_expiry: Math.floor(Date.now() / 1000) + 300 // 5 minutes
+    };
+
+    console.log('🔍 HTTP API request:', requestBody);
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('🔍 HTTP API response:', data);
+    
+    if (data && data.e8s) {
+      return BigInt(data.e8s);
+    }
+    
+    return 0n;
+  } catch (error) {
+    console.error('❌ Error getting balance via HTTP API:', error);
+    return 0n;
+  }
 }
 
 // Функція для отримання балансу з симуляцією (для демонстрації)

@@ -790,7 +790,7 @@ export default function MainApp() {
           ICP - WCHL25
         </a>
         <br />
-        Version 0.8.11
+        Version 0.8.12
       </div>
     </div>
   );
