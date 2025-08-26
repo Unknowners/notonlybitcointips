@@ -51,8 +51,8 @@ shared({ caller = initializer }) actor class UserCanister() = {
     private stable var users: [(UserId, User)] = [];
     private stable var campaigns: [(CampaignId, Campaign)] = [];
     
-    private var usersMap = HashMap.HashMap<UserId, User>(0, Principal.equal, Principal.hash);
-    private var campaignsMap = HashMap.HashMap<CampaignId, Campaign>(0, Text.equal, Text.hash);
+    private transient var usersMap = HashMap.HashMap<UserId, User>(0, Principal.equal, Principal.hash);
+    private transient var campaignsMap = HashMap.HashMap<CampaignId, Campaign>(0, Text.equal, Text.hash);
 
     // System functions
     system func preupgrade() {
