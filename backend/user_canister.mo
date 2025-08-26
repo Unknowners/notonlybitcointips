@@ -16,7 +16,7 @@ import Nat32 "mo:base/Nat32";
 import Buffer "mo:base/Buffer";
 import Result "mo:base/Result";
 
-shared({ caller = initializer }) actor class UserCanister() = {
+shared({ caller = initializer }) persistent actor class UserCanister() = {
 
     // Types
     type UserId = Principal;
