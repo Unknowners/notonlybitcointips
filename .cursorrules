@@ -19,18 +19,7 @@ This is a decentralized crowdfunding DApp built on Internet Computer Protocol (I
 - **IC Integration**: @dfinity/agent 3.1.0, @dfinity/auth-client 3.1.0
 - **QR Codes**: qrcode.react 4.2.0
 
-### Key Files & Structure
-```
-/backend/user_canister.mo    # Main Motoko canister with wallet system
-/frontend/src/
-  ├── App.tsx               # Router setup (/, /donate/:id)
-  ├── MainApp.tsx           # Main app with auth & campaign creation
-  ├── CampaignPage.tsx      # Individual campaign pages
-  ├── account.ts            # Account ID generation (ICP standard)
-  ├── ledger.ts             # ICP Ledger integration
-  ├── ckbtc.ts              # ckBTC integration and operations
-  └── canisters/            # Canister type definitions
-```
+
 
 ## CORE FUNCTIONALITY
 
@@ -55,26 +44,7 @@ where h = SHA224("\x0Aaccount-id" || user_principal || campaign_subaccount)
 6. **Balance Tracking**: Real-time balance updates every 10 seconds for all tokens
 7. **Withdrawal**: Campaign owners can withdraw to personal wallets (ICP/ckBTC)
 
-### 3. Data Types (Motoko)
-```motoko
-type User = {
-    id: UserId;           // Principal
-    name: Text;
-    email: ?Text;
-    createdAt: Nat64;
-};
 
-type Campaign = {
-    id: CampaignId;       // Text
-    name: Text;
-    description: Text;
-    owner: UserId;        // Principal
-    acceptedTokens: [Text]; // ["ICP", "ckBTC"]
-    subaccount: Blob;     // 32-byte campaign identifier
-    accountId: AccountId; // Generated ICP account
-    createdAt: Nat64;
-};
-```
 
 ## DEVELOPMENT RULES & CONVENTIONS
 
@@ -103,17 +73,7 @@ type Campaign = {
 
 ## CRITICAL IMPLEMENTATION DETAILS
 
-### Account ID Generation (Frontend)
-```typescript
-// Standards-compliant ICP account generation
-export async function generateAccountId(userPrincipal: string, campaignId: string): Promise<string> {
-  const principal = Principal.fromText(userPrincipal);
-  const campaignBytes = new TextEncoder().encode(campaignId);
-  const subaccount = new Uint8Array(32);
-  // Copy campaign ID into 32-byte subaccount...
-  return await generateAccountIdentifier(principal, subaccount);
-}
-```
+
 
 ### Balance Tracking Strategy
 - **Query calls**: Frontend polls balance every 10 seconds for all tokens
@@ -133,21 +93,9 @@ export async function generateAccountId(userPrincipal: string, campaignId: strin
 
 ## ENVIRONMENT SETUP
 
-### Local Development
-```bash
-dfx start --clean --background
-dfx deploy
-cd frontend && npm install && npm run dev
-```
 
-### Environment Variables (frontend/.env)
-```
-VITE_CANISTER_ID_USER_CANISTER=$(dfx canister id user_canister)
-VITE_CANISTER_ID_INTERNET_IDENTITY=$(dfx canister id internet_identity)
-VITE_CANISTER_HOST=http://127.0.0.1:4943  # or https://ic0.app for mainnet
-DFX_NETWORK=local  # or ic for mainnet
-VITE_DFX_NETWORK=local  # or ic for mainnet
-```
+
+
 
 ### Canister IDs (Mainnet)
 - **ckBTC Minter**: `mqygn-kiaaa-aaaar-qaadq-cai`
@@ -163,78 +111,27 @@ VITE_DFX_NETWORK=local  # or ic for mainnet
 - **Multi-token balance**: Verify separate balance tracking for ICP and ckBTC
 
 ## DEPLOYMENT
-- **Local**: `dfx deploy` - тестування тільки локально
-- **Mainnet**: ICP Ninja автоматично деплоїть при натисканні "Run"
-- **ВАЖЛИВО**: НЕ намагатися деплоїти на mainnet вручну - це робить ICP Ninja
-- **Scripts**: Use scripts/deploy-to-mainnet.sh for production (тільки якщо потрібно)
+- **Local**: `dfx deploy` - testing only locally
+- **Mainnet**: ICP Ninja automatically deploys when "Run" is clicked
+- **IMPORTANT**: DO NOT attempt to deploy to mainnet manually - ICP Ninja handles this
+- **Scripts**: Use scripts/deploy-to-mainnet.sh for production (only if needed)
+
+## PROJECT LANGUAGE POLICY
+**IMPORTANT: This project uses English as the primary language. All code, comments, documentation, commit messages, and user-facing text must be written in English.**
 
 ## CODING STYLE PREFERENCES
-1. **Ukrainian comments**: Code comments in Ukrainian language
+1. **English language**: All code comments, variable names, and documentation must be in English
 2. **Descriptive naming**: Long, clear variable names over short ones
-3. **Error messages**: Informative error handling with context
-4. **Console logging**: Extensive logging for debugging
+3. **Error messages**: Informative error handling with context in English
+4. **Console logging**: Extensive logging for debugging in English
 5. **Type annotations**: Explicit types even when inferred
 6. **Always start your answer with which AI model was used to produce response** - show list of models if many
-7. **Almost never use smiles symbols in code and in docs** - only if neccesery, keep style of docs more human like
-8. **When you finish and tested your changes in code - always make commit and don't forget to follow version changes rules described is this files**
+7. **Almost never use emoji symbols in code and docs** - only if necessary, keep style of docs professional
+8. **When you finish and tested your changes in code - always make commit and don't forget to follow version changes rules described in this file**
 9. **ckBTC naming**: Use clear prefixes like `ckBtcBalance`, `ckBtcAddress` for ckBTC variables
 10. **Multi-token handling**: Consistent naming patterns for different token types
 
-## COMMON PATTERNS TO FOLLOW
 
-### Canister Integration
-```typescript
-import { user_canister } from './canisters';
-const actor = user_canister;
-const result = await actor.createCampaign(name, description, tokens);
-```
-
-### Balance Updates
-```typescript
-useEffect(() => {
-  const interval = setInterval(async () => {
-    // ICP balance
-    const icpBalance = await getAccountBalance(accountId);
-    setIcpBalance(icpBalance);
-    
-    // ckBTC balance
-    const ckBtcBalance = await getCkBtcBalance(identity, owner, subaccount);
-    setCkBtcBalance(ckBtcBalance);
-  }, 10000);
-  return () => clearInterval(interval);
-}, [accountId, identity, owner, subaccount]);
-```
-
-### Error Handling
-```typescript
-try {
-  const result = await actor.someOperation();
-  if ('Err' in result) {
-    console.error('Operation failed:', result.Err);
-    return;
-  }
-  // Handle success case
-} catch (error) {
-  console.error('Network error:', error);
-}
-```
-
-### ckBTC Integration
-```typescript
-// Get ckBTC deposit address
-const depositAddress = await getCkBtcDepositAddress(identity, owner, subaccount);
-
-// Check ckBTC balance
-const balance = await getCkBtcBalance(identity, owner, subaccount);
-
-// Withdraw ckBTC
-const result = await withdrawCkBtc(identity, address, amount);
-if (result.ok) {
-  console.log('Withdrawal successful:', result.ok);
-} else {
-  console.error('Withdrawal failed:', result.err);
-}
-```
 
 ## PERFORMANCE CONSIDERATIONS
 1. **Query calls**: Prefer query over update for read operations
@@ -285,25 +182,38 @@ This is a hackathon project built for ICP ecosystem, prioritizing rapid developm
   - Restore: `git switch -c restore/vX.Y.Z vX.Y.Z`
 - **Note**: tags do not trigger mainnet deploys; ICP Ninja deploys via "Run"
 
-### Example Commit Messages with Versions
+### Commit Message Rules
+1. **Language**: All commit messages must be written in English
+2. **Format**: Start with version number (e.g., `v0.6.2:`)
+3. **Style**: Use conventional commit format: `type: description`
+4. **Examples**:
 ```
 v0.6.0: feat: implement account ID generation
 v0.5.3: fix: resolve wallet display issues  
 v0.5.2: docs: update deployment guide
-``` 
+```
+
+### Post-Commit Actions (MANDATORY)
+**After every commit, you MUST push to origin/main:**
+```bash
+git push origin main
+```
+This ensures all changes are synchronized with the remote repository and available for deployment.
+
+**IMPORTANT**: Never skip the push step - it's mandatory for every commit to maintain repository synchronization. 
 
 ## TESTING & COMMIT POLICY (MANDATORY)
-1. Перед кожним комітом:
-   - Обовʼязково оновити `VERSION` (pre-commit hook зробить автопідвищення PATCH за потреби) та синхронізувати версію (скрипт вже підключений).
-   - Запустити повний набір тестів і досягти 100% успішного проходження:
-     - Frontend E2E (Playwright): `cd frontend && npm run test:e2e` (або headed). Якщо сценарії/UI змінились — розширити/оновити тести.
-     - API (user_canister) unit/integration (коли додано): `npm run test:api` — повне покриття методів та сценаріїв. Будь-яка зміна бекенда вимагає оновлення тест-кейсів.
-     - ckBTC Integration: Тестування ckBTC deposit/withdrawal flows та балансів.
-   - Якщо зміни суттєві, додати/оновити сценарії (як фронтенд, так і API) перед комітом.
-2. Перед написанням нових E2E сценаріїв, за потреби використовувати Playwright MCP для швидкої інтерактивної перевірки UI та збору артефактів (скріншоти/мережа) — це прискорює розробку тестів. Приклад підключення MCP: див. `~/.cursor/mcp.json` із сервером `playwright`.
-3. У CI/pre-push (коли буде підключено): блокувати пуш, якщо будь-які тести падають або є невідповідність версії.
-4. **ckBTC Testing Requirements**: Всі зміни пов'язані з ckBTC повинні включати тести для:
-   - Депозиту ckBTC на адреси кампаній
-   - Отримання ckBTC балансів
-   - Виведення ckBTC з кампаній
-   - Обробки помилок ckBTC операцій 
+1. **Before every commit:**
+   - **MUST update `VERSION`** (pre-commit hook will auto-increment PATCH version if needed) and sync version across all files (script is already connected).
+   - **MUST run full test suite** and achieve 100% success rate:
+     - **Frontend E2E (Playwright)**: `cd frontend && npm run test:e2e` (or headed). If scenarios/UI changed — extend/update tests.
+     - **API (user_canister) unit/integration** (when backend changes): `npm run test:api` — full coverage of methods and scenarios. Any backend change requires test case updates.
+     - **ckBTC Integration**: Test ckBTC deposit/withdrawal flows and balances.
+   - If changes are substantial, add/update scenarios (both frontend and API) before commit.
+2. **Before writing new E2E scenarios**, use Playwright MCP for quick interactive UI verification and artifact collection (screenshots/network) — this speeds up test development. MCP connection example: see `~/.cursor/mcp.json` with `playwright` server.
+3. **In CI/pre-push** (when connected): block push if any tests fail or version mismatch exists.
+4. **ckBTC Testing Requirements**: All ckBTC-related changes must include tests for:
+   - ckBTC deposits to campaign addresses
+   - ckBTC balance retrieval
+   - ckBTC withdrawals from campaigns
+   - ckBTC operation error handling 
