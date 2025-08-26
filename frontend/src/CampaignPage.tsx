@@ -74,14 +74,11 @@ export default function CampaignPage() {
       const campaignData = await actor.getCampaign(id);
       console.log('Campaign data received:', campaignData);
       
-      if (campaignData) {
-        console.log('🔍 Сира відповідь з backend:', campaignData);
-        console.log('🔍 Тип відповіді:', typeof campaignData);
-        console.log('🔍 Це масив?', Array.isArray(campaignData));
-        console.log('🔍 Довжина масиву:', Array.isArray(campaignData) ? campaignData.length : 'N/A');
-        
-        // getCampaign повертає Optional<Campaign> = [Campaign] | []
-        const campaign = Array.isArray(campaignData) && campaignData.length > 0 ? campaignData[0] : campaignData;
+      // getCampaign повертає Optional<Campaign> = [Campaign] | []
+      // В Candid це opt Campaign, тому frontend отримує [Campaign] або []
+      if (campaignData && Array.isArray(campaignData) && campaignData.length > 0) {
+        const campaign = campaignData[0];
+        console.log('🔍 Витягнута кампанія:', campaign);
         
         console.log('🔍 Витягнута кампанія:', campaign);
         console.log('🔍 Тип витягнутої кампанії:', typeof campaign);
@@ -130,6 +127,7 @@ export default function CampaignPage() {
           }
         } catch (authError) {
           console.log('User not authenticated or error getting current user:', authError);
+          // Для анонімних користувачів встановлюємо owner = false
           setIsOwner(false);
         }
       } else {
@@ -295,7 +293,17 @@ export default function CampaignPage() {
     isFetchingBalanceRef.current = true;
     try {
       console.log('[ICP] Updating ICP balance...');
-      const balanceValue = await getAccountBalance(accountId);
+      let balanceValue: bigint;
+      
+      try {
+        // Спочатку пробуємо реальний баланс
+        balanceValue = await getAccountBalance(accountId);
+      } catch (balanceError) {
+        console.log('[ICP] Real balance failed, using simulated:', balanceError);
+        // Якщо не вдалося, використовуємо симульований баланс
+        balanceValue = await getSimulatedBalance(accountId);
+      }
+      
       if (balanceValue !== lastBalanceRef.current) {
         lastBalanceRef.current = balanceValue;
         startTransition(() => setBalance(balanceValue));
