@@ -1,5 +1,7 @@
 // Функції для роботи з ICP Ledger через агент @dfinity/agent
 
+const ledgerCanisterId = "ryjl3-tyaaa-aaaaa-aaaba-cai"; // ICP Ledger canister ID
+
 // Конфігурація мережі
 const isMainnet = window.location.hostname.includes('ic0.app') || 
                  window.location.hostname.includes('icp0.io') ||
@@ -8,7 +10,14 @@ const isMainnet = window.location.hostname.includes('ic0.app') ||
 
 const isICPNinja = window.location.hostname.includes('ninja.ic0.app');
 
-const ledgerCanisterId = "ryjl3-tyaaa-aaaaa-aaaba-cai"; // ICP Ledger canister ID
+// Додаємо логування для діагностики мережі
+console.log('🌐 Ledger Network Detection:', {
+  hostname: window.location.hostname,
+  isMainnet,
+  isICPNinja,
+  VITE_DFX_NETWORK: import.meta.env.VITE_DFX_NETWORK,
+  ledgerCanisterId
+});
 import { Actor, HttpAgent } from '@dfinity/agent';
 // @ts-ignore - JS IDL factory
 import { idlFactory as ledgerIdl } from './canisters/ledger.did.js';
@@ -74,6 +83,8 @@ export async function getAccountBalance(accountId: string): Promise<bigint> {
 export async function getRealAccountBalance(accountId: string): Promise<bigint> {
   try {
     const host = (isMainnet || isICPNinja) ? 'https://ic0.app' : 'http://127.0.0.1:4943';
+    console.log('🔍 getRealAccountBalance - Network detection:', { isMainnet, isICPNinja, host });
+    
     const agent = new HttpAgent({ host });
     if (!isMainnet && !isICPNinja) {
       await agent.fetchRootKey();
@@ -83,13 +94,16 @@ export async function getRealAccountBalance(accountId: string): Promise<bigint> 
       canisterId: ledgerCanisterId,
     });
 
-    console.log('Querying ledger account_balance_dfx for:', accountId, 'via', host);
+    console.log('🔍 Querying ledger account_balance_dfx for:', accountId, 'via', host);
     const res = await (ledger as any).account_balance_dfx({ account: accountId });
+    console.log('🔍 Ledger response:', res);
+    
     // res: { e8s: nat64 }
     const e8s = BigInt(res?.e8s ?? 0);
+    console.log('🔍 Parsed balance (e8s):', e8s.toString());
     return e8s;
   } catch (error) {
-    console.error('Error getting real account balance:', error);
+    console.error('❌ Error getting real account balance:', error);
     return 0n;
   }
 }
