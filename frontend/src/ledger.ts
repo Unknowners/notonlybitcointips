@@ -171,12 +171,17 @@ export async function transferICP(
       memo: memo ?? 0n,
       amount: { e8s: amount },
       fee: { e8s: fee },
-      from_subaccount: fromSubaccount ? [Array.from(fromSubaccount)] : [],
+      from_subaccount: fromSubaccount ? Array.from(fromSubaccount) : [],
       to: Array.from(toBytes),
       created_at_time: [{ timestamp_nanos: nowNanos }]
     };
 
     console.log('🔍 transferICP - Transfer args:', args);
+    console.log('🔍 transferICP - from_subaccount details:', {
+      fromSubaccount: fromSubaccount ? Array.from(fromSubaccount) : undefined,
+      fromSubaccountLength: fromSubaccount ? fromSubaccount.length : 0,
+      fromSubaccountType: fromSubaccount ? typeof fromSubaccount : 'undefined'
+    });
 
     const res = await (ledger as any).transfer(args);
     console.log('🔍 transferICP - Transfer response:', res);
