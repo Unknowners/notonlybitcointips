@@ -253,7 +253,6 @@ export default function MainApp() {
             })
           );
           
-          console.log('Campaigns with balances:', campaignsWithBalance);
           setUserCampaigns(campaignsWithBalance);
           return;
         } catch (err) {
@@ -507,12 +506,7 @@ export default function MainApp() {
                 const isOwner = c.owner === authState.principal;
                 const hasBalance = c.balance && parseFloat(c.balance) > 0;
                 
-                // Додаємо логування для діагностики
-                console.log('Campaign:', c.name, 'Balance:', c.balance, 'hasBalance:', hasBalance, 'isOwner:', isOwner, 'Principal:', authState.principal);
-                
-                // ТЕСТОВА КАМПАНІЯ - тимчасово додаємо баланс для тестування
-                const testBalance = '0.00100000'; // 0.001 ICP для тестування
-                const testHasBalance = true; // Примусово показуємо кнопку Withdraw
+
                 
                 return (
                   <li key={i} className="bg-gray-100 rounded-lg px-4 py-3 flex justify-between items-center">
@@ -520,21 +514,21 @@ export default function MainApp() {
                       <div className="font-semibold text-gray-900">{c.name}</div>
                       <div className="text-gray-500 text-sm">{c.description}</div>
                       <div className="text-xs text-gray-400">Created: {new Date(Number(c.createdAt) / 1_000_000).toLocaleString()}</div>
-                      {(c.balance || testBalance) && (
+                      {c.balance && (
                         <div className="text-sm font-medium text-green-600 mt-1">
-                          Balance: {testBalance || c.balance} ICP
+                          Balance: {c.balance} ICP
                         </div>
                       )}
                     </div>
                     <div className="flex gap-2">
                       <a href={`/donate/${c.id}`} className="text-blue-600 hover:underline font-bold">View</a>
-                      {isOwner && (hasBalance || testHasBalance) && (
+                      {isOwner && hasBalance && (
                         <button
                           onClick={() => setWithdrawState(prev => ({ 
                             ...prev, 
                             campaignId: c.id, 
                             isOpen: true,
-                            amount: testBalance || c.balance || ''
+                            amount: c.balance || ''
                           }))}
                           className="text-green-600 hover:text-green-800 font-bold"
                           disabled={loading}
@@ -796,7 +790,7 @@ export default function MainApp() {
           ICP - WCHL25
         </a>
         <br />
-        Version 0.8.10
+        Version 0.8.11
       </div>
     </div>
   );
