@@ -524,10 +524,19 @@ export default function CampaignPage() {
               <div className="mt-3 border-t pt-3">
                 <div className="font-semibold text-gray-800 mb-1">Withdraw ckBTC to BTC address</div>
                 <input className="w-full px-3 py-2 border rounded mb-2" placeholder="BTC address" value={ckbtcWithdrawAddr} onChange={e=>setCkbtcWithdrawAddr(e.target.value)} />
-                <div className="flex items-center gap-2">
-                  <input className="flex-1 px-3 py-2 border rounded" placeholder="Amount (BTC)" value={ckbtcWithdrawAmount} onChange={e=>setCkbtcWithdrawAmount(e.target.value)} />
-                  <button className="px-3 py-2 bg-gray-700 text-white rounded" type="button" onClick={onEstimateCkBtc}>Estimate Fee</button>
-                  <button className="px-3 py-2 bg-gray-900 text-white rounded" type="button" onClick={onWithdrawCkBtc} disabled={ckbtcWithdrawing}>{ckbtcWithdrawing ? 'Withdrawing...' : 'Withdraw'}</button>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input className="flex-1 px-3 py-2 border rounded" placeholder="Amount (BTC)" value={ckbtcWithdrawAmount} onChange={e=>setCkbtcWithdrawAmount(e.target.value)} />
+                    <button className="px-3 py-2 bg-gray-700 text-white rounded" type="button" onClick={onEstimateCkBtc}>Estimate Fee</button>
+                  </div>
+                  <button 
+                    className="w-full px-3 py-2 bg-gray-900 text-white rounded" 
+                    type="button" 
+                    onClick={onWithdrawCkBtc} 
+                    disabled={ckbtcWithdrawing}
+                  >
+                    {ckbtcWithdrawing ? 'Withdrawing...' : 'Withdraw'}
+                  </button>
                 </div>
                 {ckbtcFeeInfo && (
                   <div className="text-xs text-gray-600 mt-1">Fee: total {formatBalance(ckbtcFeeInfo.total)} (minter {formatBalance(ckbtcFeeInfo.minter)}, network {formatBalance(ckbtcFeeInfo.bitcoin)})</div>
