@@ -16,7 +16,7 @@ import Nat32 "mo:base/Nat32";
 import Buffer "mo:base/Buffer";
 import Result "mo:base/Result";
 
-shared({ caller = initializer }) actor class UserCanister() = persistent {
+shared({ caller = initializer }) actor class UserCanister() = actor {
 
     // Types
     type UserId = Principal;
@@ -51,8 +51,8 @@ shared({ caller = initializer }) actor class UserCanister() = persistent {
     private stable var users: [(UserId, User)] = [];
     private stable var campaigns: [(CampaignId, Campaign)] = [];
     
-    private transient var usersMap = HashMap.HashMap<UserId, User>(0, Principal.equal, Principal.hash);
-    private transient var campaignsMap = HashMap.HashMap<CampaignId, Campaign>(0, Text.equal, Text.hash);
+    private var usersMap = HashMap.HashMap<UserId, User>(0, Principal.equal, Principal.hash);
+    private var campaignsMap = HashMap.HashMap<CampaignId, Campaign>(0, Text.equal, Text.hash);
 
     // System functions
     system func preupgrade() {
@@ -62,7 +62,7 @@ shared({ caller = initializer }) actor class UserCanister() = persistent {
 
     system func postupgrade() {
         usersMap := HashMap.fromIter<UserId, User>(users.vals(), 0, Principal.equal, Principal.hash);
-        campaigns := [];
+        users := [];
         campaignsMap := HashMap.fromIter<CampaignId, Campaign>(campaigns.vals(), 0, Text.equal, Text.hash);
         campaigns := [];
     };
@@ -94,9 +94,9 @@ shared({ caller = initializer }) actor class UserCanister() = persistent {
         return true;
     };
 
-    public query func userExists() : async Bool {
-        switch (usersMap.get(initializer)) {
-            case (?user) { return true; };
+    public shared({ caller }) func userExists() : async Bool {
+        switch (usersMap.get(caller)) {
+            case (?_) { return true; };
             case null { return false; };
         };
     };
