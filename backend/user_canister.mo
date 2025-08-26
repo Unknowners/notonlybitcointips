@@ -5,15 +5,15 @@ import Time "mo:base/Time";
 import HashMap "mo:base/HashMap";
 import Array "mo:base/Array";
 import Iter "mo:base/Iter";
-import Option "mo:base/Option";
-import Debug "mo:base/Debug";
-import Error "mo:base/Error";
+import _Option "mo:base/Option";
+import _Debug "mo:base/Debug";
+import _Error "mo:base/Error";
 import Blob "mo:base/Blob";
 import Int "mo:base/Int";
 import Nat "mo:base/Nat";
 import Nat8 "mo:base/Nat8";
 import Nat32 "mo:base/Nat32";
-import Buffer "mo:base/Buffer";
+import _Buffer "mo:base/Buffer";
 import Result "mo:base/Result";
 
 shared({ caller = initializer }) persistent actor class UserCanister() = {
@@ -48,8 +48,8 @@ shared({ caller = initializer }) persistent actor class UserCanister() = {
     };
 
     // Storage
-    private stable var users: [(UserId, User)] = [];
-    private stable var campaigns: [(CampaignId, Campaign)] = [];
+    private var users: [(UserId, User)] = [];
+    private var campaigns: [(CampaignId, Campaign)] = [];
     
     private transient var usersMap = HashMap.HashMap<UserId, User>(0, Principal.equal, Principal.hash);
     private transient var campaignsMap = HashMap.HashMap<CampaignId, Campaign>(0, Text.equal, Text.hash);
@@ -105,11 +105,11 @@ shared({ caller = initializer }) persistent actor class UserCanister() = {
         Iter.toArray(usersMap.vals())
     };
 
-    public shared({ caller }) func clearUsers() : async () {
+    public shared({ caller = _ }) func clearUsers() : async () {
         usersMap := HashMap.HashMap<UserId, User>(0, Principal.equal, Principal.hash);
     };
 
-    public shared({ caller }) func clearCampaigns() : async () {
+    public shared({ caller = _ }) func clearCampaigns() : async () {
         campaignsMap := HashMap.HashMap<CampaignId, Campaign>(0, Text.equal, Text.hash);
     };
 
@@ -141,7 +141,7 @@ shared({ caller = initializer }) persistent actor class UserCanister() = {
     };
 
     // Функція для перевірки балансу кампанії (заглушка для майбутнього)
-    private func getCampaignBalance(accountId: AccountId) : async Nat64 {
+    private func getCampaignBalance(_accountId: AccountId) : async Nat64 {
         // TODO: Реальна перевірка балансу через ICP Ledger
         // Поки що повертаємо 0 для тестування
         return 0;
@@ -321,7 +321,7 @@ shared({ caller = initializer }) persistent actor class UserCanister() = {
     };
     
     // Функція для отримання балансу account ID (заглушка для frontend)
-    public query func getAccountBalance(accountId: AccountId) : async Nat64 {
+    public query func getAccountBalance(_accountId: AccountId) : async Nat64 {
         // Це заглушка - реальна реалізація буде через frontend query до ledger canister
         return 0;
     };
