@@ -98,6 +98,8 @@ type Campaign = {
 3. **Canister calls**: Use proper agent configuration
 4. **Account IDs**: Always validate format before blockchain operations
 5. **Gas fees**: Consider cycle costs for operations
+6. **ckBTC integration**: Use proper ckBTC canister IDs for mainnet/local
+7. **Multi-token support**: Handle both ICP and ckBTC operations consistently
 
 ## CRITICAL IMPLEMENTATION DETAILS
 
@@ -125,6 +127,9 @@ export async function generateAccountId(userPrincipal: string, campaignId: strin
 2. **Campaign ownership**: Only owners can withdraw funds
 3. **Input sanitization**: Validate all user inputs
 4. **Rate limiting**: Consider implementing for balance queries
+5. **ckBTC security**: Validate Bitcoin addresses before withdrawal
+6. **Multi-token validation**: Ensure proper token type validation
+7. **Subaccount security**: Secure subaccount generation and validation
 
 ## ENVIRONMENT SETUP
 
@@ -143,6 +148,11 @@ VITE_CANISTER_HOST=http://127.0.0.1:4943  # or https://ic0.app for mainnet
 DFX_NETWORK=local  # or ic for mainnet
 VITE_DFX_NETWORK=local  # or ic for mainnet
 ```
+
+### Canister IDs (Mainnet)
+- **ckBTC Minter**: `mqygn-kiaaa-aaaar-qaadq-cai`
+- **ckBTC Ledger**: `mxzaz-hqaaa-aaaar-qaada-cai`
+- **ICP Ledger**: `ryjl3-tyaaa-aaaaa-aaaba-cai`
 
 ## TESTING STRATEGY
 - **Candid UI**: http://127.0.0.1:4943/?canisterId=umunu-kh777-77774-qaaca-cai&id=uzt4z-lp777-77774-qaabq-cai
@@ -167,6 +177,8 @@ VITE_DFX_NETWORK=local  # or ic for mainnet
 6. **Always start your answer with which AI model was used to produce response** - show list of models if many
 7. **Almost never use smiles symbols in code and in docs** - only if neccesery, keep style of docs more human like
 8. **When you finish and tested your changes in code - always make commit and don't forget to follow version changes rules described is this files**
+9. **ckBTC naming**: Use clear prefixes like `ckBtcBalance`, `ckBtcAddress` for ckBTC variables
+10. **Multi-token handling**: Consistent naming patterns for different token types
 
 ## COMMON PATTERNS TO FOLLOW
 
@@ -286,6 +298,12 @@ v0.5.2: docs: update deployment guide
    - Запустити повний набір тестів і досягти 100% успішного проходження:
      - Frontend E2E (Playwright): `cd frontend && npm run test:e2e` (або headed). Якщо сценарії/UI змінились — розширити/оновити тести.
      - API (user_canister) unit/integration (коли додано): `npm run test:api` — повне покриття методів та сценаріїв. Будь-яка зміна бекенда вимагає оновлення тест-кейсів.
+     - ckBTC Integration: Тестування ckBTC deposit/withdrawal flows та балансів.
    - Якщо зміни суттєві, додати/оновити сценарії (як фронтенд, так і API) перед комітом.
 2. Перед написанням нових E2E сценаріїв, за потреби використовувати Playwright MCP для швидкої інтерактивної перевірки UI та збору артефактів (скріншоти/мережа) — це прискорює розробку тестів. Приклад підключення MCP: див. `~/.cursor/mcp.json` із сервером `playwright`.
-3. У CI/pre-push (коли буде підключено): блокувати пуш, якщо будь-які тести падають або є невідповідність версії. 
+3. У CI/pre-push (коли буде підключено): блокувати пуш, якщо будь-які тести падають або є невідповідність версії.
+4. **ckBTC Testing Requirements**: Всі зміни пов'язані з ckBTC повинні включати тести для:
+   - Депозиту ckBTC на адреси кампаній
+   - Отримання ckBTC балансів
+   - Виведення ckBTC з кампаній
+   - Обробки помилок ckBTC операцій 
