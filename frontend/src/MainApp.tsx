@@ -601,9 +601,17 @@ export default function MainApp() {
         )}
       </div>
       <div className="mt-8 text-gray-400 text-xs text-center select-none">
-        &copy; {new Date().getFullYear()} Not Only Bitcoin Tips. Powered by ICP Hackathon.
+        &copy; {new Date().getFullYear()} Not Only Bitcoin Tips. Powered by{' '}
+        <a 
+          href="https://wchl25.worldcomputer.com/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-blue-400 hover:text-blue-300 underline transition-colors"
+        >
+          ICP - WCHL25
+        </a>
         <br />
-        Version 0.8.6
+        Version 0.8.7
       </div>
     </div>
   );
