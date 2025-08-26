@@ -1,7 +1,7 @@
 {
   "name": "frontend",
   "private": true,
-  "version": "0.7.24",
+  "version": "0.7.26",
   "type": "module",
   "packageManager": "npm@11.5.2",
   "engines": {
