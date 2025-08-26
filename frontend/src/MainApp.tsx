@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { AuthClient } from '@dfinity/auth-client';
 import { createActor } from "./canisters/index.js";
-import { getSimulatedBalance, formatBalance, getAccountBalance } from "./ledger";
+import { getSimulatedBalance, formatBalance, getAccountBalance, transferICP } from "./ledger";
 import AlphaWarning from "./components/AlphaWarning";
 
 // Типи для кампаній
@@ -32,6 +32,21 @@ export default function MainApp() {
   const [error, setError] = useState<string | null>(null);
   const [userCampaigns, setUserCampaigns] = useState<CampaignDisplay[]>([]);
   const [isFetchingCampaigns, setIsFetchingCampaigns] = useState(false);
+  
+  // Стан для withdraw
+  const [withdrawState, setWithdrawState] = useState<{
+    campaignId: string | null;
+    address: string;
+    amount: string;
+    isOpen: boolean;
+    loading: boolean;
+  }>({
+    campaignId: null,
+    address: '',
+    amount: '',
+    isOpen: false,
+    loading: false
+  });
   
   // Стан для авторизації
   const [authState, setAuthState] = useState({
@@ -341,6 +356,74 @@ export default function MainApp() {
     }
   };
 
+  // Функція для виведення ICP з кампанії
+  const handleWithdraw = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!withdrawState.campaignId || !withdrawState.address || !withdrawState.amount) {
+      setError('Please fill in all fields');
+      return;
+    }
+
+    const campaign = userCampaigns.find(c => c.id === withdrawState.campaignId);
+    if (!campaign) {
+      setError('Campaign not found');
+      return;
+    }
+
+    // Перевіряємо, чи користувач є власником кампанії
+    if (campaign.owner !== authState.principal) {
+      setError('Only campaign owner can withdraw funds');
+      return;
+    }
+
+    // Перевіряємо баланс
+    const currentBalance = campaign.balance ? parseFloat(campaign.balance) : 0;
+    const withdrawAmount = parseFloat(withdrawState.amount);
+    
+    if (withdrawAmount <= 0) {
+      setError('Amount must be greater than 0');
+      return;
+    }
+
+    if (withdrawAmount > currentBalance) {
+      setError(`Insufficient balance. Available: ${currentBalance} ICP`);
+      return;
+    }
+
+    setWithdrawState(prev => ({ ...prev, loading: true }));
+    setError(null);
+
+    try {
+      // Конвертуємо ICP в e8s
+      const amountE8s = BigInt(Math.floor(withdrawAmount * 100_000_000));
+      
+      // Виконуємо transfer через ICP Ledger
+      const result = await transferICP(
+        withdrawState.address,
+        amountE8s,
+        undefined, // fromSubaccount - буде використовуватися account ID кампанії
+        authState.authClient?.getIdentity(),
+        BigInt(Date.now()) // memo
+      );
+
+      if (result.success) {
+        console.log('✅ Withdrawal successful, block height:', result.blockHeight);
+        setError(null);
+        // Закриваємо модал та оновлюємо баланси
+        setWithdrawState(prev => ({ ...prev, isOpen: false, address: '', amount: '' }));
+        await fetchUserCampaigns(); // Оновлюємо баланси
+      } else {
+        console.error('❌ Withdrawal failed:', result.error);
+        setError(`Withdrawal failed: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('❌ Error during withdrawal:', error);
+      setError('Withdrawal failed. Please try again.');
+    } finally {
+      setWithdrawState(prev => ({ ...prev, loading: false }));
+    }
+  };
+
   // --- UI ---
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-gray-900 flex flex-col items-center justify-center p-4">
@@ -437,6 +520,21 @@ export default function MainApp() {
                     </div>
                     <div className="flex gap-2">
                       <a href={`/donate/${c.id}`} className="text-blue-600 hover:underline font-bold">View</a>
+                      {isOwner && hasBalance && (
+                        <button
+                          onClick={() => setWithdrawState(prev => ({ 
+                            ...prev, 
+                            campaignId: c.id, 
+                            isOpen: true,
+                            amount: c.balance || ''
+                          }))}
+                          className="text-green-600 hover:text-green-800 font-bold"
+                          disabled={loading}
+                          title="Withdraw funds from campaign"
+                        >
+                          Withdraw
+                        </button>
+                      )}
                       {isOwner && !hasBalance && (
                         <button
                           onClick={() => deleteCampaign(c.id)}
@@ -599,6 +697,85 @@ export default function MainApp() {
             </button>
           </>
         )}
+
+        {/* Модал для withdraw */}
+        {withdrawState.isOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-gray-900">Withdraw ICP</h3>
+                <button
+                  onClick={() => setWithdrawState(prev => ({ ...prev, isOpen: false, address: '', amount: '' }))}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <form onSubmit={handleWithdraw} className="space-y-4">
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2">ICP Address</label>
+                  <input
+                    type="text"
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg transition"
+                    required
+                    value={withdrawState.address}
+                    onChange={e => setWithdrawState(prev => ({ ...prev, address: e.target.value }))}
+                    placeholder="Enter ICP address (64 characters)"
+                    autoFocus
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2">Amount (ICP)</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.00000001"
+                      min="0"
+                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 pr-20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg transition"
+                      required
+                      value={withdrawState.amount}
+                      onChange={e => setWithdrawState(prev => ({ ...prev, amount: e.target.value }))}
+                      placeholder="0.00000000"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const campaign = userCampaigns.find(c => c.id === withdrawState.campaignId);
+                        if (campaign && campaign.balance) {
+                          setWithdrawState(prev => ({ ...prev, amount: campaign.balance || '' }));
+                        }
+                      }}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-blue-600 transition"
+                    >
+                      MAX
+                    </button>
+                  </div>
+                </div>
+
+                {error && <div className="text-red-500 text-sm font-semibold text-center">{error}</div>}
+                
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setWithdrawState(prev => ({ ...prev, isOpen: false, address: '', amount: '' }))}
+                    className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl font-bold text-lg hover:bg-gray-400 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 bg-gradient-to-r from-green-500 to-blue-500 text-white py-3 rounded-xl font-bold text-lg shadow-lg hover:scale-105 active:scale-95 transition-all duration-200"
+                    disabled={withdrawState.loading}
+                  >
+                    {withdrawState.loading ? "Processing..." : "Withdraw"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
       <div className="mt-8 text-gray-400 text-xs text-center select-none">
         &copy; {new Date().getFullYear()} Not Only Bitcoin Tips. Powered by{' '}
@@ -611,7 +788,7 @@ export default function MainApp() {
           ICP - WCHL25
         </a>
         <br />
-        Version 0.8.7
+        Version 0.8.8
       </div>
     </div>
   );
