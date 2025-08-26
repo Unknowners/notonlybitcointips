@@ -1,0 +1,18 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://u6s2n-gx777-77774-qaaba-cai.localhost:4943",
+      "localStorage": [
+        {
+          "name": "ii-last-used-identities",
+          "value": "{\"data\":{},\"version\":4}"
+        },
+        {
+          "name": "ii-localstorage-feature-flags__CONTINUE_FROM_ANOTHER_DEVICE",
+          "value": "false"
+        }
+      ]
+    }
+  ]
+}
