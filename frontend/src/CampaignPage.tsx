@@ -9,6 +9,7 @@ import { AuthClient } from '@dfinity/auth-client';
 import { getCkBtcDepositAddress } from './ckbtc';
 import { getCkBtcBalance, pollUpdateBalance, estimateWithdrawFee, withdrawCkBtc } from './ckbtc';
 import type { Campaign } from "./canisters/user_canister/user_canister.did.d.ts";
+import AlphaWarning from "./components/AlphaWarning";
 
 export default function CampaignPage() {
   const { id } = useParams<{ id: string }>();
@@ -402,6 +403,7 @@ export default function CampaignPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-gray-900 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md bg-white/90 rounded-3xl shadow-2xl p-10 backdrop-blur-md">
+        <AlphaWarning />
         <h1 className="text-3xl font-extrabold text-gray-900 mb-2">{campaign.name}</h1>
         <p className="text-gray-700 mb-4">{campaign.description}</p>
         

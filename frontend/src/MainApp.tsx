@@ -3,6 +3,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { AuthClient } from '@dfinity/auth-client';
 import { createActor } from "./canisters/index.js";
 import { getSimulatedBalance, formatBalance, getAccountBalance } from "./ledger";
+import AlphaWarning from "./components/AlphaWarning";
 
 // Типи для кампаній
 type Campaign = {
@@ -344,6 +345,7 @@ export default function MainApp() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-gray-900 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md bg-white/90 rounded-3xl shadow-2xl p-10 backdrop-blur-md animate-fade-in">
+        <AlphaWarning />
         <div className="flex flex-col items-center mb-8">
           <div className="bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-full p-3 shadow-lg mb-2">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -601,7 +603,7 @@ export default function MainApp() {
       <div className="mt-8 text-gray-400 text-xs text-center select-none">
         &copy; {new Date().getFullYear()} Not Only Bitcoin Tips. Powered by ICP Hackathon.
         <br />
-        Version 0.8.0
+        Version 0.8.1
       </div>
     </div>
   );
