@@ -222,7 +222,7 @@ export default function MainApp() {
             owner: campaign.owner?.toString?.() ?? String(campaign.owner),
             acceptedTokens: campaign.acceptedTokens,
             accountId: campaign.accountId,
-            subaccount: campaign.subaccount ? new Uint8Array(campaign.subaccount) : undefined,
+            subaccount: campaign.subaccount ? Uint8Array.from(campaign.subaccount) : undefined,
             createdAt: campaign.createdAt.toString()
           }));
           
@@ -411,6 +411,8 @@ export default function MainApp() {
         campaignId: campaign.id,
         accountId: campaign.accountId,
         subaccount: Array.from(campaign.subaccount),
+        subaccountLength: campaign.subaccount.length,
+        subaccountType: typeof campaign.subaccount,
         withdrawAmount,
         amountE8s: amountE8s.toString(),
         targetAddress: withdrawState.address
@@ -809,7 +811,7 @@ export default function MainApp() {
           ICP - WCHL25
         </a>
         <br />
-        Version 0.8.14
+        Version 0.8.15
       </div>
     </div>
   );
