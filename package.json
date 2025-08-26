@@ -1,6 +1,6 @@
 {
   "name": "notonlybitcointips",
-  "version": "0.7.24",
+  "version": "0.7.26",
   "description": "Donation Hub - ICP DApp with Internet Identity authentication",
   "scripts": {
     "dev": "dfx start --background && dfx deploy && cd frontend && npm run dev",
