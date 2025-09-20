@@ -16,6 +16,9 @@ import Nat32 "mo:base/Nat32";
 import _Buffer "mo:base/Buffer";
 import Result "mo:base/Result";
 
+// ICP Ledger canister ID (mainnet)
+let LEDGER_CANISTER_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+
 shared({ caller = initializer }) persistent actor class UserCanister() = {
 
     // Types
@@ -327,6 +330,18 @@ shared({ caller = initializer }) persistent actor class UserCanister() = {
         return 0;
     };
 
+    // Функція для конвертації hex string в bytes
+    private func hexToBytes(hex: Text) : [Nat8] {
+        let cleanHex = Text.replace(hex, #text " ", "");
+        let bytes = Array.tabulate<Nat8>(cleanHex.size() / 2, func(i: Nat) : Nat8 {
+            let start = i * 2;
+            let end = start + 2;
+            let hexByte = Text.subText(cleanHex, start, end);
+            Nat8.fromNat(Nat.fromText(hexByte, 16));
+        });
+        bytes;
+    };
+
     // Функція для виведення коштів (справжня реалізація)
     public shared({ caller }) func withdrawFunds(request: TransferRequest) : async Bool {
         // Перевіряємо чи користувач є власником кампанії
@@ -341,12 +356,55 @@ shared({ caller = initializer }) persistent actor class UserCanister() = {
                         return false; // Недостатньо коштів
                     };
                     
-                    // Тут буде справжня логіка виведення коштів через ICP Ledger
-                    // Поки що повертаємо true як заглушку
-                    // В реальному проекті потрібно:
-                    // 1. Виконати transfer через ICP Ledger
-                    // 2. Оновити стан кампанії
-                    return true;
+                    // Виконуємо transfer через ICP Ledger
+                    try {
+                        // Конвертуємо target address в bytes
+                        let toBytes = hexToBytes(request.targetAddress);
+                        
+                        // Створюємо transfer args
+                        let transferArgs = {
+                            memo = 0;
+                            amount = { e8s = request.amount };
+                            fee = { e8s = 10000 }; // 0.0001 ICP fee
+                            from_subaccount = ?Array.toArray(campaign.subaccount);
+                            to = toBytes;
+                            created_at_time = ?{ timestamp_nanos = Nat64.fromNat(Int.abs(Time.now())) };
+                        };
+                        
+                        // Викликаємо ICP Ledger
+                        let ledger = actor(LEDGER_CANISTER_ID) : actor {
+                            transfer : (args: {
+                                memo: Nat64;
+                                amount: { e8s: Nat64 };
+                                fee: { e8s: Nat64 };
+                                from_subaccount: ?[Nat8];
+                                to: [Nat8];
+                                created_at_time: ?{ timestamp_nanos: Nat64 };
+                            }) -> async Result.Result<Nat64, {
+                                #BadFee: { expected_fee: { e8s: Nat64 } };
+                                #InsufficientFunds: { balance: { e8s: Nat64 } };
+                                #TxTooOld: { allowed_window_nanos: Nat64 };
+                                #TxCreatedInFuture: null;
+                                #TxDuplicate: { duplicate_of: Nat64 };
+                            };
+                        };
+                        
+                        let result = await ledger.transfer(transferArgs);
+                        
+                        switch (result) {
+                            case (#ok(blockHeight)) {
+                                // Transfer успішний
+                                return true;
+                            };
+                            case (#err(error)) {
+                                // Transfer не вдався
+                                return false;
+                            };
+                        };
+                    } catch (error) {
+                        // Помилка при transfer
+                        return false;
+                    };
                 } else {
                     return false; // Не авторизований
                 };

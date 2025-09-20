@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, startTransition } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { useParams, useNavigate } from "react-router-dom";
 import { user_canister } from "./canisters/index.js";
-import { getSimulatedBalance, formatBalance, getAccountBalance, transferICP } from "./ledger";
+import { getSimulatedBalance, formatBalance, getAccountBalance } from "./ledger";
 
 import { AuthClient } from '@dfinity/auth-client';
 import { getCkBtcDepositAddress } from './ckbtc';
@@ -331,50 +331,33 @@ export default function CampaignPage() {
         balanceE8s: balance
       });
 
-      // Отримуємо identity для transfer
-      const identity = authState.authClient?.getIdentity();
-      if (!identity) {
-        setWithdrawError("Authentication required for withdrawal");
-        return;
-      }
-
-      // Генеруємо subaccount з campaign ID (як в MainApp.tsx)
-      const subaccountBytes = new TextEncoder().encode(campaign.id);
-      const subaccount = new Uint8Array(32);
-      subaccount.set(subaccountBytes.slice(0, 32));
-
       console.log('🔍 Withdraw details:', {
         campaignId: campaign.id,
         accountId: campaign.accountId,
-        subaccount: Array.from(subaccount),
-        subaccountLength: subaccount.length,
         withdrawAmount: amount,
         amountE8s: amountE8s.toString(),
-        targetAddress: withdrawAddress,
-        identityProvided: !!identity
+        targetAddress: withdrawAddress
       });
 
-      // Виконуємо transfer через ICP Ledger (справжня реалізація)
-      const result = await transferICP(
-        withdrawAddress,
-        amountE8s,
-        subaccount, // fromSubaccount - subaccount кампанії
-        identity,
-        BigInt(Date.now()) // memo
-      );
+      // Використовуємо backend для виводу (він має доступ до campaign.accountId)
+      const result = await user_canister.withdrawFunds({
+        campaignId: campaign.id,
+        targetAddress: withdrawAddress,
+        amount: amountE8s
+      });
 
-      console.log('🔍 Transfer result:', result);
+      console.log('🔍 Withdraw result:', result);
 
-      if (result.success) {
-        console.log('✅ Withdrawal successful, block height:', result.blockHeight);
+      if (result) {
+        console.log('✅ Withdrawal successful');
         setWithdrawSuccess(true);
         setWithdrawAddress("");
         setWithdrawAmount("");
         // Оновлюємо баланс після успішного виведення
         setTimeout(() => loadBalance(campaign.accountId!), 1000);
       } else {
-        console.error('❌ Withdrawal failed:', result.error);
-        setWithdrawError(`Withdrawal failed: ${result.error}`);
+        console.error('❌ Withdrawal failed');
+        setWithdrawError("Withdrawal failed. Please try again.");
       }
     } catch (error) {
       console.error('❌ Error during withdrawal:', error);
