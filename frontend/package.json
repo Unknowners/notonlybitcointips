@@ -1,7 +1,11 @@
 {
   "name": "frontend",
   "private": true,
-  "version": "0.8.24",
+  "version": "<<<<<<< HEAD
+0.8.24
+=======
+0.8.26
+>>>>>>> 395d1d85c0e8d1eef9d4266bc09782fdb8795d40",
   "type": "module",
   "engines": {
     "node": ">=18.0.0",

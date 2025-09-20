@@ -381,11 +381,11 @@ shared({ caller = initializer }) persistent actor class UserCanister() = {
                                 to: [Nat8];
                                 created_at_time: ?{ timestamp_nanos: Nat64 };
                             }) -> async Result.Result<Nat64, {
-                                #BadFee: { expected_fee: { e8s: Nat64 } };
-                                #InsufficientFunds: { balance: { e8s: Nat64 } };
-                                #TxTooOld: { allowed_window_nanos: Nat64 };
-                                #TxCreatedInFuture: null;
-                                #TxDuplicate: { duplicate_of: Nat64 };
+                                #BadFee: { expected_fee: { e8s: Nat64 } }
+                                #InsufficientFunds: { balance: { e8s: Nat64 } }
+                                #TxTooOld: { allowed_window_nanos: Nat64 }
+                                #TxCreatedInFuture: {}
+                                #TxDuplicate: { duplicate_of: Nat64 }
                             };
                         };
                         

@@ -837,7 +837,11 @@ export default function MainApp({ authState, setAuthState }: MainAppProps) {
           ICP - WCHL25
         </a>
         <br />
-        Version 0.8.24
+        Version <<<<<<< HEAD
+0.8.24
+=======
+0.8.26
+>>>>>>> 395d1d85c0e8d1eef9d4266bc09782fdb8795d40
       </div>
     </div>
   );
