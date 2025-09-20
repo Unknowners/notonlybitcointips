@@ -1,7 +1,9 @@
 // Функції для роботи з ICP Ledger через агент @dfinity/agent
 
-// Використовуємо локальний canister ID для розробки
-const ledgerCanisterId = "ulvla-h7777-77774-qaacq-cai"; // Локальний canister ID
+// Використовуємо правильний canister ID залежно від середовища
+const ledgerCanisterId = import.meta.env.DEV 
+  ? "ulvla-h7777-77774-qaacq-cai" // Локальний canister ID для розробки
+  : "ryjl3-tyaaa-aaaaa-aaaba-cai"; // Mainnet canister ID
 
 // Конфігурація мережі
 const isMainnet = window.location.hostname.includes('ic0.app') || 

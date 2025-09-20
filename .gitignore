@@ -18,3 +18,7 @@ logs/
 
 # Local canister IDs
 canister_ids.json
+
+# Local development files
+backend/ledger.mo
+scripts/test-local-icp.js

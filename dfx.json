@@ -23,10 +23,6 @@
         }
       },
       "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz"
-    },
-    "ledger": {
-      "main": "backend/ledger.mo",
-      "type": "motoko"
     }
   },
   "output_env_file": ".env",
