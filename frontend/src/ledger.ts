@@ -213,16 +213,6 @@ export async function transferICP(
       fromSubaccountOpt: fromSubaccount ? [fromSubaccount] : []
     });
 
-    // Додаткова перевірка балансу перед transfer
-    if (fromSubaccount) {
-      try {
-        console.log('🔍 transferICP - Checking balance before transfer...');
-        const balanceCheck = await getRealAccountBalance(to, identity);
-        console.log('🔍 transferICP - Balance check result:', { balance: balanceCheck.toString() });
-      } catch (balanceError) {
-        console.log('⚠️ transferICP - Balance check failed:', balanceError);
-      }
-    }
 
     console.log('🔍 transferICP - Calling ledger.transfer...');
     const res = await (ledger as any).transfer(args);

@@ -322,20 +322,14 @@ export default function CampaignPage() {
         return;
       }
 
-      // Перевіряємо чи сума не перевищує баланс
+      // Конвертуємо ICP в e8s
       const amountE8s = BigInt(Math.floor(amount * 100_000_000));
       console.log('🔍 Withdraw validation:', {
         withdrawAmount: amount,
         amountE8s: amountE8s.toString(),
         currentBalance: balance.toString(),
-        balanceE8s: balance,
-        isAmountValid: amountE8s <= balance
+        balanceE8s: balance
       });
-
-      if (amountE8s > balance) {
-        setWithdrawError(`Insufficient funds (balance: ${formatBalance(balance)} ICP)`);
-        return;
-      }
 
       // Отримуємо identity для transfer
       const identity = authState.authClient?.getIdentity();
