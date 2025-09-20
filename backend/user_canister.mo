@@ -384,7 +384,7 @@ shared({ caller = initializer }) persistent actor class UserCanister() = {
                                 #BadFee: { expected_fee: { e8s: Nat64 } };
                                 #InsufficientFunds: { balance: { e8s: Nat64 } };
                                 #TxTooOld: { allowed_window_nanos: Nat64 };
-                                #TxCreatedInFuture: null;
+                                #TxCreatedInFuture: {};
                                 #TxDuplicate: { duplicate_of: Nat64 };
                             };
                         };
