@@ -143,8 +143,9 @@ shared({ caller = initializer }) persistent actor class UserCanister() = {
     // Функція для перевірки балансу кампанії (заглушка для майбутнього)
     private func _getCampaignBalance(_accountId: AccountId) : async Nat64 {
         // TODO: Реальна перевірка балансу через ICP Ledger
-        // Поки що повертаємо 0 для тестування
-        return 0;
+        // Поки що повертаємо симульований баланс для тестування
+        // В реальному проекті тут буде виклик до ICP Ledger canister
+        return 100000000; // 1 ICP в e8s для тестування
     };
     
     // Правильна функція для генерації account ID згідно з ICP стандартами
@@ -332,12 +333,19 @@ shared({ caller = initializer }) persistent actor class UserCanister() = {
         switch (campaignsMap.get(request.campaignId)) {
             case (?campaign) {
                 if (Principal.equal(campaign.owner, caller)) {
+                    // Перевіряємо баланс кампанії
+                    let balance = await _getCampaignBalance(campaign.accountId);
+                    
+                    // Перевіряємо чи достатньо коштів для виведення
+                    if (balance < request.amount) {
+                        return false; // Недостатньо коштів
+                    };
+                    
                     // Тут буде справжня логіка виведення коштів через ICP Ledger
                     // Поки що повертаємо true як заглушку
                     // В реальному проекті потрібно:
-                    // 1. Отримати баланс account ID
-                    // 2. Виконати transfer через ICP Ledger
-                    // 3. Оновити стан кампанії
+                    // 1. Виконати transfer через ICP Ledger
+                    // 2. Оновити стан кампанії
                     return true;
                 } else {
                     return false; // Не авторизований

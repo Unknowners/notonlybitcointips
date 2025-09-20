@@ -10,8 +10,10 @@ import { getCkBtcDepositAddress } from './ckbtc';
 import { getCkBtcBalance, pollUpdateBalance, estimateWithdrawFee, withdrawCkBtc } from './ckbtc';
 import type { Campaign } from "./canisters/user_canister/user_canister.did.d.ts";
 import AlphaWarning from "./components/AlphaWarning";
+import { useAuth } from "./contexts/AuthContext";
 
 export default function CampaignPage() {
+  const { authState } = useAuth();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
@@ -248,8 +250,12 @@ export default function CampaignPage() {
       let balanceValue: bigint;
       
       try {
-        // Спочатку пробуємо реальний баланс
-        balanceValue = await getAccountBalance(accountId);
+        // Отримуємо identity з authState
+        const identity = authState.authClient?.getIdentity();
+        console.log('[ICP] Using identity for balance check:', !!identity);
+        
+        // Спочатку пробуємо реальний баланс з identity
+        balanceValue = await getAccountBalance(accountId, identity);
       } catch (balanceError) {
         console.log('[ICP] Real balance failed, using simulated:', balanceError);
         // Якщо не вдалося, використовуємо симульований баланс

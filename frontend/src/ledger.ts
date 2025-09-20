@@ -1,6 +1,7 @@
 // Функції для роботи з ICP Ledger через агент @dfinity/agent
 
-const ledgerCanisterId = "ryjl3-tyaaa-aaaaa-aaaba-cai"; // ICP Ledger canister ID
+// Використовуємо локальний canister ID для розробки
+const ledgerCanisterId = "ulvla-h7777-77774-qaacq-cai"; // Локальний canister ID
 
 // Конфігурація мережі
 const isMainnet = window.location.hostname.includes('ic0.app') || 
@@ -52,24 +53,25 @@ function formatTransferError(err: any): string {
 }
 
 // Функція для отримання балансу account через HTTP запит
-export async function getAccountBalance(accountId: string): Promise<bigint> {
+export async function getAccountBalance(accountId: string, identity?: any): Promise<bigint> {
   try {
     const host = (isMainnet || isICPNinja) ? 'https://ic0.app' : 'http://localhost:4943';
     
     if (import.meta.env.DEV) {
       console.log('Getting balance for account:', accountId);
       console.log('Using host:', host);
+      console.log('Identity provided:', !!identity);
     }
     
-    // Спочатку пробуємо через canister
+    // Спочатку пробуємо через canister з identity
     try {
-      const balance = await getRealAccountBalance(accountId);
+      const balance = await getRealAccountBalance(accountId, identity);
       if (balance > 0n) {
         console.log('✅ Balance via canister:', balance);
         return balance;
       }
     } catch (canisterError) {
-      console.log('⚠️ Canister method failed, trying HTTP API...');
+      console.log('⚠️ Canister method failed, trying HTTP API...', canisterError);
     }
     
     // Якщо canister не спрацював, пробуємо HTTP API
@@ -95,13 +97,14 @@ export async function getAccountBalance(accountId: string): Promise<bigint> {
 }
 
 // Функція для правильного HTTP запиту до ICP Ledger
-export async function getRealAccountBalance(accountId: string): Promise<bigint> {
+export async function getRealAccountBalance(accountId: string, identity?: any): Promise<bigint> {
   try {
     const host = (isMainnet || isICPNinja) ? 'https://ic0.app' : 'http://127.0.0.1:4943';
     console.log('🔍 getRealAccountBalance - Network detection:', { isMainnet, isICPNinja, host });
     console.log('🔍 Account ID:', accountId);
+    console.log('🔍 Identity provided:', !!identity);
     
-    const agent = new HttpAgent({ host });
+    const agent = new HttpAgent({ host, identity });
     if (!isMainnet && !isICPNinja) {
       await agent.fetchRootKey();
     }

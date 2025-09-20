@@ -26,7 +26,19 @@ type CampaignDisplay = Omit<Campaign, 'createdAt'> & {
 
 const TOKENS = ["ICP", "BTC", "ETH", "USDT"];
 
-export default function MainApp() {
+interface AuthState {
+  actor: any;
+  authClient?: AuthClient;
+  isAuthenticated: boolean;
+  principal: string;
+}
+
+interface MainAppProps {
+  authState: AuthState;
+  setAuthState: React.Dispatch<React.SetStateAction<AuthState>>;
+}
+
+export default function MainApp({ authState, setAuthState }: MainAppProps) {
   const [step, setStep] = useState<"auth" | "register" | "dashboard" | "qr">("auth");
   const [user, setUser] = useState<{ name: string; email: string }>({ name: "", email: "" });
   const [campaign, setCampaign] = useState({ name: "", description: "", tokens: [] as string[] });
@@ -49,14 +61,6 @@ export default function MainApp() {
     amount: '',
     isOpen: false,
     loading: false
-  });
-  
-  // Стан для авторизації
-  const [authState, setAuthState] = useState({
-    actor: undefined as any,
-    authClient: undefined as AuthClient | undefined,
-    isAuthenticated: false,
-    principal: 'Click "Whoami" to see your Principal ID'
   });
 
   // Налаштування мережі
@@ -247,11 +251,12 @@ export default function MainApp() {
             createdAt: campaign.createdAt.toString()
           }));
           
-          // Завантажуємо баланси для кожної кампанії
+          // Завантажуємо баланси для кожної кампанії з identity
+          const identity = authState.authClient?.getIdentity();
           const campaignsWithBalance = await Promise.all(
             campaignsForDisplay.map(async (campaign) => {
               try {
-                const balance = await getAccountBalance(campaign.accountId);
+                const balance = await getAccountBalance(campaign.accountId, identity);
                 const formatted = formatBalance(balance);
                 return {
                   ...campaign,
@@ -832,7 +837,7 @@ export default function MainApp() {
           ICP - WCHL25
         </a>
         <br />
-        Version 0.8.18
+        Version 0.8.19
       </div>
     </div>
   );
