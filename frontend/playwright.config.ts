@@ -1,25 +1,38 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:5173';
-
 export default defineConfig({
   testDir: './tests',
-  timeout: 30_000,
-  expect: { timeout: 5_000 },
+  timeout: 60_000,
+  expect: { timeout: 10_000 },
   use: {
-    baseURL,
-    headless: true,
+    baseURL: 'http://localhost:5173',
+    headless: false,
     trace: 'on-first-retry',
-    // storageState will be supplied later for authenticated tests
+    video: 'retain-on-failure',
+    screenshot: 'only-on-failure',
   },
   webServer: {
-    command: 'npm run dev -- --port=5173',
-    url: baseURL,
+    command: 'npm run dev',
+    url: 'http://localhost:5173',
     reuseExistingServer: true,
     timeout: 120_000,
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { 
+      name: 'chromium', 
+      use: { 
+        ...devices['Desktop Chrome'],
+        headless: false,
+        // Try to load existing storage state
+        storageState: 'storageState.json',
+      } 
+    },
   ],
-  reporter: [['list'], ['html', { open: 'never' }]],
-}); 
+  reporter: [
+    ['list'],
+    ['html', { 
+      open: 'never',
+      outputFolder: 'playwright-report'
+    }],
+  ],
+});

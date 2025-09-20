@@ -3,7 +3,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { AuthClient } from '@dfinity/auth-client';
 import { createActor } from "./canisters/index.js";
 import { getSimulatedBalance, formatBalance, getAccountBalance, transferICP } from "./ledger";
-
+import { saveAuthSession, loadAuthSession, clearAuthSession } from "./auth/sessionStorage";
 
 import AlphaWarning from "./components/AlphaWarning";
 
@@ -87,7 +87,21 @@ export default function MainApp() {
 
   // Ініціалізація авторизації
   useEffect(() => {
-    console.log('🚀 MainApp: Component mounted, calling updateActor...');
+    console.log('🚀 MainApp: Component mounted, checking for saved session...');
+    
+    // Check if we have a valid saved session
+    const savedSession = loadAuthSession();
+    if (savedSession && savedSession.isAuthenticated) {
+      console.log('✅ Found valid saved session, setting initial state...');
+      setAuthState(prev => ({
+        ...prev,
+        isAuthenticated: true,
+        principal: savedSession.principal
+      }));
+      setStep("dashboard");
+    }
+    
+    // Always call updateActor to initialize auth client
     updateActor();
   }, []);
 
@@ -141,14 +155,19 @@ export default function MainApp() {
         principal
       }));
 
-                        // Автоматичний перехід на dashboard після успішної авторизації
-                        if (isAuthenticated) {
-                          console.log('✅ User is authenticated');
-                          console.log('🔄 Redirecting to dashboard...');
-                          setStep("dashboard");
-                        } else {
-                          console.log('❌ User is not authenticated');
-                        }
+      // Save or clear session based on authentication status
+      if (isAuthenticated) {
+        console.log('✅ User is authenticated, saving session...');
+        saveAuthSession({
+          isAuthenticated: true,
+          principal: principal
+        });
+        console.log('🔄 Redirecting to dashboard...');
+        setStep("dashboard");
+      } else {
+        console.log('❌ User is not authenticated, clearing session...');
+        clearAuthSession();
+      }
     } catch (error) {
       console.error('❌ Error updating actor:', error);
     }
@@ -166,7 +185,9 @@ export default function MainApp() {
   const logout = async () => {
     if (!authState.authClient) return;
     
+    console.log('🚪 Logging out user...');
     await authState.authClient.logout();
+    clearAuthSession(); // Clear saved session
     updateActor();
     setStep("auth");
     // Очищаємо кампанії при logout
@@ -811,7 +832,7 @@ export default function MainApp() {
           ICP - WCHL25
         </a>
         <br />
-        Version 0.8.17
+        Version 0.8.18
       </div>
     </div>
   );

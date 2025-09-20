@@ -1,145 +1,275 @@
-# Testing Guide
+# Testing Guide - Not Only Bitcoin Tips
 
-This document provides comprehensive testing instructions for the Not Only Bitcoin Tips application.
+## Overview
 
-## Prerequisites
+This project has a comprehensive testing suite covering both frontend and backend functionality, including ckBTC integration. The testing approach has been simplified to focus on a single end-to-end test that covers the complete user journey.
 
-Before testing, ensure you have:
-- DFX installed and configured
-- Node.js and npm installed
-- Local Internet Computer replica running
-- All canisters deployed
+## Test Types
 
-## Local Testing Setup
+### 1. API Tests (Backend)
+- **Location**: `tests/api/`
+- **Runner**: Jest
+- **Command**: `npm run test:api`
+- **Coverage**: 
+  - User management (createUser, userExists)
+  - Campaign CRUD operations
+  - Account ID generation
+  - ckBTC integration
+  - Withdrawal functionality
 
-### Step 1: Start Local Environment
+### 2. Frontend E2E Tests
+- **Location**: `frontend/tests/`
+- **Runner**: Playwright
+- **Command**: `npm run test:frontend`
+- **Coverage**:
+  - Complete user journey from authentication to campaign management
+  - Campaign creation and management
+  - ckBTC integration UI
 
+## Quick Start
+
+### Prerequisites
+1. Node.js 18+
+2. DFX (Internet Computer SDK)
+3. Internet Computer replica running
+
+### Running All Tests
 ```bash
-# Start local replica
-dfx start --clean --background
+# Complete test suite
+npm run test
 
-# Deploy canisters
-dfx deploy
-
-# Start frontend development server
-cd frontend && npm run dev
+# Or step by step
+npm run test:setup  # Start IC replica
+npm run test:api    # Backend tests
+npm run test:frontend    # Frontend tests
 ```
 
-### Step 2: Internet Identity Setup
+### Visual Testing (Recommended)
 
-1. Open http://127.0.0.1:4943/?canisterId=umunu-kh777-77774-qaaca-cai&id=u6s2n-gx777-77774-qaaba-cai
-2. Create a new identity or sign in to existing one
-3. Note your Principal ID for testing
+For development and debugging, run tests with a visible browser interface:
 
-### Step 3: User Registration
+```bash
+# Visual mode - see browser and test execution
+npm run test:frontend:visual
 
-1. Open http://localhost:5173
-2. Click "Sign in with Internet Identity"
-3. Fill out the registration form (name and email)
-4. Click "Complete Registration"
+# Full flow test with UI
+npm run test:full-flow
+```
 
-### Step 4: Campaign Creation
+## Main Test: Full User Flow
 
-1. Fill out the campaign creation form
-2. Select currencies for donations
-3. Click "Create Campaign"
-4. Verify QR code and link generation
+The primary test is `frontend/tests/full-flow.spec.ts` which covers:
 
-## Test Scenarios
+1. **Authentication**: Manual login with Internet Identity
+2. **Campaign Creation**: Automatic creation of test campaign
+3. **Campaign Management**: Viewing campaign list and details
+4. **State Persistence**: Authentication state is saved for future runs
 
-### Authentication Flow
+### First Time Setup
 
-- [ ] User can sign in with Internet Identity
-- [ ] User can see their Principal ID
-- [ ] User can logout successfully
-- [ ] User registration works correctly
+When running the full flow test for the first time:
 
-### Campaign Management
+1. **Start the test**: `npm run test:full-flow`
+2. **Wait for the app to load** on http://localhost:5173
+3. **Click "Sign in with Internet Identity"**
+4. **Complete authentication** in the popup window
+5. **Test will automatically continue** after successful authentication
+6. **Authentication state is saved** for future test runs
 
-- [ ] User can create new campaigns
-- [ ] Campaign details are saved correctly
-- [ ] QR codes are generated properly
-- [ ] Campaign links work correctly
+### Subsequent Runs
 
-### Verifying ICP Deposits
+After the first run:
+- **Authentication state is preserved** in `frontend/storageState.json`
+- **Tests run automatically** without manual login
+- **If state expires**, the test will prompt for re-authentication
 
-1. Obtain the campaign's deposit account from the campaign page.
-2. Send a small amount of ICP to this account using your wallet or the ledger canister.
-3. Check the balance of the subaccount via the ledger canister to confirm the deposit.
+## Individual Test Suites
 
-### Data Persistence
+#### API Tests Only
+```bash
+npm run test:api
+```
 
-- [ ] Campaigns persist after page refresh
-- [ ] User data is saved correctly
-- [ ] Campaign retrieval works properly
+#### Frontend E2E Tests Only
+```bash
+npm run test:frontend
+```
 
-## API Testing
+#### Visual Mode Tests
+```bash
+npm run test:frontend:visual
+```
 
-### User Canister Methods
+#### Full Flow Test (Visual)
+```bash
+npm run test:full-flow
+```
 
-Test the following methods via Candid UI:
+## Test Configuration
 
-1. **whoami()** - Should return Principal ID
-2. **createUser(name, email)** - Should create user
-3. **userExists()** - Should return true for existing users
-4. **createCampaign(name, description, tokens)** - Should create campaign
-5. **getCampaign(id)** - Should return campaign details
-6. **getUserCampaigns(userId)** - Should return user's campaigns
+### Jest Configuration
+- **File**: `jest.config.js`
+- **Timeout**: 30 seconds
+- **Environment**: Node.js
+- **Setup**: `tests/api/setup.js`
 
-### Candid UI Access
+### Playwright Configuration
+- **File**: `frontend/playwright.config.ts`
+- **Timeout**: 60 seconds (increased for manual authentication)
+- **Base URL**: http://localhost:5173
+- **Headless**: false in non-CI environments
+- **Features**: Screenshots, video recording, traces
 
-- Local: http://127.0.0.1:4943/?canisterId=umunu-kh777-77774-qaaca-cai&id=uzt4z-lp777-77774-qaabq-cai
+## Test Data Management
+
+### Authentication State
+- **File**: `frontend/storageState.json`
+- **Creation**: Automatic during first test run
+- **Usage**: Automatically loaded by subsequent tests
+- **Refresh**: Delete file to force re-authentication
+
+### Test Cleanup
+- API tests clean up created campaigns automatically
+- E2E tests use unique timestamps to avoid conflicts
+- IC replica state is reset between test runs
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **"No such file or directory" error** - Make sure dfx is running
-2. **Authentication error** - Check if Internet Identity canister is deployed
-3. **Connection error to canister** - Verify canister ID in frontend
+#### 1. IC Replica Not Running
+```bash
+# Start IC replica
+dfx start --background
+dfx deploy
+```
 
-### Debug Steps
+#### 2. Authentication Tests Failing
+```bash
+# Recreate auth state
+rm frontend/storageState.json
+npm run test:full-flow
+```
 
-1. Check browser console for errors
-2. Verify canister IDs in frontend/.env
-3. Check dfx logs: `dfx logs`
-4. Restart local replica if needed
+#### 3. Port Conflicts
+```bash
+# Check if ports are in use
+lsof -i :5173  # Frontend
+lsof -i :4943  # IC replica
+```
 
-## Performance Testing
+#### 4. Jest Tests Failing
+```bash
+# Clear Jest cache
+npx jest --clearCache
+```
 
-### Load Testing
+### Debug Mode
 
-- Test with multiple campaigns
-- Verify QR code generation performance
-- Check memory usage with large datasets
+#### Playwright Debug
+```bash
+cd frontend
+npm run test:frontend:visual
+```
 
-### Browser Compatibility
+#### Jest Debug
+```bash
+npm run test:api -- --verbose
+```
 
-Test in:
-- Chrome (recommended)
-- Firefox
-- Safari
-- Edge
+## Visual Testing Features
 
-## Security Testing
+### Browser Visibility
+- **Headed Mode**: See browser window during test execution
+- **UI Mode**: Interactive Playwright interface for step-by-step execution
+- **Screenshots**: Automatic screenshots on test failures
+- **Video Recording**: Videos saved for failed tests
+- **Trace Files**: Detailed execution traces for debugging
 
-### Authentication
+### Test Report Access
 
-- Verify Internet Identity integration
-- Test logout functionality
-- Check session management
+After running tests, view the HTML report:
 
-### Data Validation
+```bash
+# From project root
+npm run test:report
 
-- Test with invalid input data
-- Verify error handling
-- Check XSS prevention
+# Or directly
+cd frontend && npx playwright show-report
+```
 
-## Reporting Issues
+The report includes:
+- Test execution timeline
+- Screenshots and videos
+- Error details and stack traces
+- Performance metrics
+- Test artifacts
 
-When reporting issues, include:
-- Browser and version
-- DFX version
-- Error messages from console
-- Steps to reproduce
-- Expected vs actual behavior 
+## Continuous Integration
+
+### Pre-commit Hooks
+- Tests run automatically before commits
+- Must pass 100% to allow commit
+- Version is automatically updated
+
+### Test Coverage
+- API tests cover all canister methods
+- E2E tests cover critical user flows
+- ckBTC tests cover Bitcoin integration
+
+## Performance
+
+### Test Execution Time
+- **API Tests**: ~30 seconds
+- **E2E Tests**: ~2 minutes
+- **Full Suite**: ~3 minutes
+
+### Optimization
+- Tests run in parallel where possible
+- IC replica reuse between tests
+- Minimal test data creation
+
+## Future Improvements
+
+1. **Visual Regression Tests**: Screenshot comparisons
+2. **Load Testing**: Performance under load
+3. **Mobile Testing**: Responsive design tests
+4. **Cross-browser Testing**: Firefox, Safari support
+5. **Integration Tests**: Full user journey tests
+
+## Contributing
+
+When adding new features:
+1. Add corresponding API tests
+2. Update E2E tests for UI changes
+3. Update ckBTC tests if applicable
+4. Ensure all tests pass before committing
+5. Update this documentation if needed
+
+## Commands Reference
+
+```bash
+# All tests
+npm run test
+
+# API tests only
+npm run test:api
+
+# Frontend tests (headless)
+npm run test:frontend
+
+# Frontend tests (with browser)
+npm run test:frontend:headed
+
+# Frontend tests (visual UI)
+npm run test:frontend:visual
+
+# Full flow test (visual)
+npm run test:full-flow
+
+# View test report
+npm run test:report
+
+# Setup environment
+npm run test:setup
+```

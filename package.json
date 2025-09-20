@@ -1,6 +1,6 @@
 {
   "name": "notonlybitcointips",
-  "version": "0.8.17",
+  "version": "0.8.18",
   "description": "Donation Hub - ICP DApp with Internet Identity authentication",
   "scripts": {
     "dev": "dfx start --background && dfx deploy && cd frontend && npm run dev",
@@ -8,11 +8,19 @@
     "deploy:local": "dfx deploy",
     "deploy:mainnet": "./scripts/deploy-to-mainnet.sh",
     "update-ids": "node scripts/update-canister-ids.js",
+    "update-config": "node scripts/update-config.js",
     "update-version": "node scripts/update-version.js",
     "install-hooks": "node scripts/install-git-hooks.js",
     "postinstall": "npm run install-hooks",
     "clean": "dfx stop && dfx start --clean --background",
-    "test": "echo \"No tests specified\" && exit 0"
+    "test": "npm run test:api && npm run test:frontend",
+    "test:api": "jest tests/api/",
+    "test:frontend": "cd frontend && npm run test",
+    "test:frontend:visual": "cd frontend && npm run test:visual",
+    "test:frontend:headed": "cd frontend && npm run test:headed",
+    "test:session": "cd frontend && npm run test:session",
+    "test:setup": "dfx start --background && dfx deploy",
+    "test:report": "cd frontend && npm run test:report"
   },
   "keywords": [
     "internet-computer",
@@ -29,6 +37,8 @@
   "devDependencies": {
     "@dfinity/agent": "^0.15.6",
     "@dfinity/auth-client": "^0.15.6",
-    "@playwright/test": "^1.54.2"
+    "@playwright/test": "^1.54.2",
+    "@types/jest": "^29.5.12",
+    "jest": "^29.7.0"
   }
 }

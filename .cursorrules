@@ -19,8 +19,6 @@ This is a decentralized crowdfunding DApp built on Internet Computer Protocol (I
 - **IC Integration**: @dfinity/agent 3.1.0, @dfinity/auth-client 3.1.0
 - **QR Codes**: qrcode.react 4.2.0
 
-
-
 ## CORE FUNCTIONALITY
 
 ### 1. Wallet System Architecture
@@ -44,8 +42,6 @@ where h = SHA224("\x0Aaccount-id" || user_principal || campaign_subaccount)
 6. **Balance Tracking**: Real-time balance updates every 10 seconds for all tokens
 7. **Withdrawal**: Campaign owners can withdraw to personal wallets (ICP/ckBTC)
 
-
-
 ## DEVELOPMENT RULES & CONVENTIONS
 
 ### Motoko Backend Rules
@@ -63,7 +59,7 @@ where h = SHA224("\x0Aaccount-id" || user_principal || campaign_subaccount)
 5. **Type safety**: Import proper types from declarations/
 
 ### ICP Integration Rules
-1. **Environment handling**: Support local (localhost:4943) and mainnet (ic0.app)
+1. **Environment handling**: Support local and mainnet networks
 2. **Identity management**: Always check authentication state
 3. **Canister calls**: Use proper agent configuration
 4. **Account IDs**: Always validate format before blockchain operations
@@ -71,9 +67,20 @@ where h = SHA224("\x0Aaccount-id" || user_principal || campaign_subaccount)
 6. **ckBTC integration**: Use proper ckBTC canister IDs for mainnet/local
 7. **Multi-token support**: Handle both ICP and ckBTC operations consistently
 
+## CONFIGURATION MANAGEMENT
+
+### Configuration Files
+- **config.json**: Central configuration with canister IDs and network settings
+- **canister_ids.json**: Auto-generated from config.json
+- **.env.local**: Environment variables for testing
+- **VERSION**: Single source of truth for version
+
+### Configuration Updates
+- **Use `npm run update-config`** to sync configuration across all files
+- **Never hardcode canister IDs** - always use configuration files
+- **Environment-specific settings** are managed through config.json
+
 ## CRITICAL IMPLEMENTATION DETAILS
-
-
 
 ### Balance Tracking Strategy
 - **Query calls**: Frontend polls balance every 10 seconds for all tokens
@@ -93,17 +100,20 @@ where h = SHA224("\x0Aaccount-id" || user_principal || campaign_subaccount)
 
 ## ENVIRONMENT SETUP
 
+### Local Development
+- **IC Replica**: `dfx start --background`
+- **Deploy**: `dfx deploy`
+- **Frontend**: `cd frontend && npm run dev`
+- **Configuration**: `npm run update-config`
 
-
-
-
-### Canister IDs (Mainnet)
-- **ckBTC Minter**: `mqygn-kiaaa-aaaar-qaadq-cai`
-- **ckBTC Ledger**: `mxzaz-hqaaa-aaaar-qaada-cai`
-- **ICP Ledger**: `ryjl3-tyaaa-aaaaa-aaaba-cai`
+### Testing
+- **API Tests**: `npm run test:api` (requires IC replica)
+- **E2E Tests**: `npm run test:e2e`
+- **Full Suite**: `npm run test:all`
+- **Auth Setup**: `cd frontend && npx playwright test tests/auth.setup.spec.ts --headed`
 
 ## TESTING STRATEGY
-- **Candid UI**: http://127.0.0.1:4943/?canisterId=umunu-kh777-77774-qaaca-cai&id=uzt4z-lp777-77774-qaabq-cai
+- **Candid UI**: Available at local network URL from config
 - **Internet Identity**: Local testing with temporary identities
 - **Account generation**: Verify hex format and uniqueness
 - **Balance simulation**: Use getRealAccountBalance vs getSimulatedBalance
@@ -127,11 +137,9 @@ where h = SHA224("\x0Aaccount-id" || user_principal || campaign_subaccount)
 5. **Type annotations**: Explicit types even when inferred
 6. **Always start your answer with which AI model was used to produce response** - show list of models if many
 7. **Almost never use emoji symbols in code and docs** - only if necessary, keep style of docs professional
-8. **When you finish and tested your changes in code - always make commit and don't forget to follow version changes rules described in this file**
+8. **When you finish and tested your changes in code** - always make commit and don't forget to follow version changes rules described in this file
 9. **ckBTC naming**: Use clear prefixes like `ckBtcBalance`, `ckBtcAddress` for ckBTC variables
 10. **Multi-token handling**: Consistent naming patterns for different token types
-
-
 
 ## PERFORMANCE CONSIDERATIONS
 1. **Query calls**: Prefer query over update for read operations
