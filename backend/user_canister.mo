@@ -385,7 +385,7 @@ shared({ caller = initializer }) persistent actor class UserCanister() = {
                                 #InsufficientFunds: { balance: { e8s: Nat64 } };
                                 #TxTooOld: { allowed_window_nanos: Nat64 };
                                 #TxCreatedInFuture: {};
-                                #TxDuplicate: { duplicate_of: Nat64 };
+                                #TxDuplicate: { duplicate_of: Nat64 }
                             };
                         };
                         
