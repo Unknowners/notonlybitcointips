@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef, startTransition } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { useParams, useNavigate } from "react-router-dom";
 import { user_canister } from "./canisters/index.js";
-import { getSimulatedBalance, formatBalance } from "./ledger";
-import { getAccountBalance } from "./ledger";
+import { getSimulatedBalance, formatBalance, getAccountBalance, transferICP } from "./ledger";
 
 import { AuthClient } from '@dfinity/auth-client';
 import { getCkBtcDepositAddress } from './ckbtc';
@@ -246,32 +245,45 @@ export default function CampaignPage() {
     if (isFetchingBalanceRef.current) return;
     isFetchingBalanceRef.current = true;
     try {
-      console.log('[ICP] Updating ICP balance...');
+      console.log('🔍 [ICP] Updating ICP balance for account:', accountId);
       let balanceValue: bigint;
       
       try {
         // Отримуємо identity з authState
         const identity = authState.authClient?.getIdentity();
-        console.log('[ICP] Using identity for balance check:', !!identity);
+        console.log('🔍 [ICP] Using identity for balance check:', !!identity);
+        console.log('🔍 [ICP] Identity type:', typeof identity);
         
         // Спочатку пробуємо реальний баланс з identity
+        console.log('🔍 [ICP] Calling getAccountBalance...');
         balanceValue = await getAccountBalance(accountId, identity);
+        console.log('🔍 [ICP] getAccountBalance result:', balanceValue.toString());
+        console.log('🔍 [ICP] Balance in ICP:', formatBalance(balanceValue));
       } catch (balanceError) {
-        console.log('[ICP] Real balance failed, using simulated:', balanceError);
+        console.log('⚠️ [ICP] Real balance failed, using simulated:', balanceError);
         // Якщо не вдалося, використовуємо симульований баланс
         balanceValue = await getSimulatedBalance(accountId);
+        console.log('🔍 [ICP] Simulated balance result:', balanceValue.toString());
       }
+      
+      console.log('🔍 [ICP] Final balance value:', balanceValue.toString());
+      console.log('🔍 [ICP] Previous balance:', lastBalanceRef.current.toString());
+      console.log('🔍 [ICP] Balance changed:', balanceValue !== lastBalanceRef.current);
       
       if (balanceValue !== lastBalanceRef.current) {
         lastBalanceRef.current = balanceValue;
         startTransition(() => setBalance(balanceValue));
+        console.log('✅ [ICP] Balance updated to:', formatBalance(balanceValue));
+      } else {
+        console.log('ℹ️ [ICP] Balance unchanged:', formatBalance(balanceValue));
       }
     } catch (error) {
-      console.error('Error loading balance:', error);
+      console.error('❌ [ICP] Error loading balance:', error);
       const simulatedBalance = await getSimulatedBalance(accountId);
       if (simulatedBalance !== lastBalanceRef.current) {
         lastBalanceRef.current = simulatedBalance;
         startTransition(() => setBalance(simulatedBalance));
+        console.log('✅ [ICP] Fallback to simulated balance:', formatBalance(simulatedBalance));
       }
     } finally {
       isFetchingBalanceRef.current = false;
@@ -312,30 +324,67 @@ export default function CampaignPage() {
 
       // Перевіряємо чи сума не перевищує баланс
       const amountE8s = BigInt(Math.floor(amount * 100_000_000));
+      console.log('🔍 Withdraw validation:', {
+        withdrawAmount: amount,
+        amountE8s: amountE8s.toString(),
+        currentBalance: balance.toString(),
+        balanceE8s: balance,
+        isAmountValid: amountE8s <= balance
+      });
+
       if (amountE8s > balance) {
-        setWithdrawError("Amount cannot exceed campaign balance");
+        setWithdrawError(`Insufficient funds (balance: ${formatBalance(balance)} ICP)`);
         return;
       }
 
-      // Тут буде виклик до backend для виведення коштів
-      const result = await user_canister.withdrawFunds({
+      // Отримуємо identity для transfer
+      const identity = authState.authClient?.getIdentity();
+      if (!identity) {
+        setWithdrawError("Authentication required for withdrawal");
+        return;
+      }
+
+      // Генеруємо subaccount з campaign ID (як в MainApp.tsx)
+      const subaccountBytes = new TextEncoder().encode(campaign.id);
+      const subaccount = new Uint8Array(32);
+      subaccount.set(subaccountBytes.slice(0, 32));
+
+      console.log('🔍 Withdraw details:', {
         campaignId: campaign.id,
+        accountId: campaign.accountId,
+        subaccount: Array.from(subaccount),
+        subaccountLength: subaccount.length,
+        withdrawAmount: amount,
+        amountE8s: amountE8s.toString(),
         targetAddress: withdrawAddress,
-        amount: amountE8s
+        identityProvided: !!identity
       });
 
-      if (result) {
+      // Виконуємо transfer через ICP Ledger (справжня реалізація)
+      const result = await transferICP(
+        withdrawAddress,
+        amountE8s,
+        subaccount, // fromSubaccount - subaccount кампанії
+        identity,
+        BigInt(Date.now()) // memo
+      );
+
+      console.log('🔍 Transfer result:', result);
+
+      if (result.success) {
+        console.log('✅ Withdrawal successful, block height:', result.blockHeight);
         setWithdrawSuccess(true);
         setWithdrawAddress("");
         setWithdrawAmount("");
         // Оновлюємо баланс після успішного виведення
         setTimeout(() => loadBalance(campaign.accountId!), 1000);
       } else {
-        setWithdrawError("Withdrawal failed. Please check your address and try again.");
+        console.error('❌ Withdrawal failed:', result.error);
+        setWithdrawError(`Withdrawal failed: ${result.error}`);
       }
     } catch (error) {
-      console.error('Error withdrawing funds:', error);
-      setWithdrawError("An error occurred during withdrawal.");
+      console.error('❌ Error during withdrawal:', error);
+      setWithdrawError(`Withdrawal failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setWithdrawLoading(false);
     }

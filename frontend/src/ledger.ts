@@ -103,8 +103,9 @@ export async function getRealAccountBalance(accountId: string, identity?: any): 
   try {
     const host = (isMainnet || isICPNinja) ? 'https://ic0.app' : 'http://127.0.0.1:4943';
     console.log('🔍 getRealAccountBalance - Network detection:', { isMainnet, isICPNinja, host });
-    console.log('🔍 Account ID:', accountId);
-    console.log('🔍 Identity provided:', !!identity);
+    console.log('🔍 getRealAccountBalance - Account ID:', accountId);
+    console.log('🔍 getRealAccountBalance - Identity provided:', !!identity);
+    console.log('🔍 getRealAccountBalance - Identity type:', typeof identity);
     
     const agent = new HttpAgent({ host, identity });
     if (!isMainnet && !isICPNinja) {
@@ -115,16 +116,26 @@ export async function getRealAccountBalance(accountId: string, identity?: any): 
       canisterId: ledgerCanisterId,
     });
 
-    console.log('🔍 Querying ledger account_balance_dfx for:', accountId, 'via', host);
+    console.log('🔍 getRealAccountBalance - Ledger actor created:', { canisterId: ledgerCanisterId });
+    console.log('🔍 getRealAccountBalance - Querying ledger account_balance_dfx for:', accountId, 'via', host);
+    
     const res = await (ledger as any).account_balance_dfx({ account: accountId });
-    console.log('🔍 Ledger response:', res);
+    console.log('🔍 getRealAccountBalance - Ledger response:', res);
+    console.log('🔍 getRealAccountBalance - Response type:', typeof res);
+    console.log('🔍 getRealAccountBalance - Response keys:', res ? Object.keys(res) : 'null');
     
     // res: { e8s: nat64 }
     const e8s = BigInt(res?.e8s ?? 0);
-    console.log('🔍 Parsed balance (e8s):', e8s.toString());
+    console.log('🔍 getRealAccountBalance - Parsed balance (e8s):', e8s.toString());
+    console.log('🔍 getRealAccountBalance - Balance in ICP:', e8sToICP(e8s));
     return e8s;
   } catch (error) {
-    console.error('❌ Error getting real account balance:', error);
+    console.error('❌ getRealAccountBalance - Error getting real account balance:', error);
+    console.error('❌ getRealAccountBalance - Error details:', {
+      name: (error as Error).name,
+      message: (error as Error).message,
+      stack: (error as Error).stack
+    });
     return 0n;
   }
 }
@@ -157,6 +168,7 @@ export async function transferICP(
     const host = (isMainnet || isICPNinja) ? 'https://ic0.app' : 'http://127.0.0.1:4943';
     console.log('🔍 transferICP - Network detection:', { isMainnet, isICPNinja, host });
     console.log('🔍 transferICP - Parameters:', { to, amount: amount.toString(), fromSubaccount: fromSubaccount ? Array.from(fromSubaccount) : undefined, memo: memo?.toString() });
+    console.log('🔍 transferICP - Identity check:', { identityProvided: !!identity, identityType: typeof identity });
 
     const agent = new HttpAgent({ host, identity });
     if (!isMainnet && !isICPNinja) {
@@ -167,10 +179,22 @@ export async function transferICP(
       canisterId: ledgerCanisterId,
     });
 
+    console.log('🔍 transferICP - Ledger actor created:', { canisterId: ledgerCanisterId });
+
     // Convert hex accountId to raw bytes
     const toBytes = hexToBytes(to);
     const fee = 10000n; // 0.0001 ICP in e8s
     const nowNanos = BigInt(Date.now()) * 1_000_000n;
+
+    console.log('🔍 transferICP - Conversion details:', {
+      toAddress: to,
+      toBytes: Array.from(toBytes),
+      toBytesLength: toBytes.length,
+      amountE8s: amount.toString(),
+      feeE8s: fee.toString(),
+      memo: memo?.toString() || '0',
+      timestamp: nowNanos.toString()
+    });
 
     const args = {
       memo: memo ?? 0n,
@@ -189,15 +213,37 @@ export async function transferICP(
       fromSubaccountOpt: fromSubaccount ? [fromSubaccount] : []
     });
 
+    // Додаткова перевірка балансу перед transfer
+    if (fromSubaccount) {
+      try {
+        console.log('🔍 transferICP - Checking balance before transfer...');
+        const balanceCheck = await getRealAccountBalance(to, identity);
+        console.log('🔍 transferICP - Balance check result:', { balance: balanceCheck.toString() });
+      } catch (balanceError) {
+        console.log('⚠️ transferICP - Balance check failed:', balanceError);
+      }
+    }
+
+    console.log('🔍 transferICP - Calling ledger.transfer...');
     const res = await (ledger as any).transfer(args);
     console.log('🔍 transferICP - Transfer response:', res);
     
     if ('Ok' in res) {
+      console.log('✅ transferICP - Transfer successful, block height:', res.Ok);
       return { success: true, blockHeight: BigInt(res.Ok) };
     }
-    return { success: false, error: formatTransferError(res.Err) };
+    
+    console.log('❌ transferICP - Transfer failed with error:', res.Err);
+    const errorMessage = formatTransferError(res.Err);
+    console.log('❌ transferICP - Formatted error:', errorMessage);
+    return { success: false, error: errorMessage };
   } catch (error) {
-    console.error('❌ Error transferring ICP:', error);
+    console.error('❌ transferICP - Exception during transfer:', error);
+    console.error('❌ transferICP - Error details:', {
+      name: (error as Error).name,
+      message: (error as Error).message,
+      stack: (error as Error).stack
+    });
     return { success: false, error: (error as Error).toString() };
   }
 }
